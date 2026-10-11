@@ -1,0 +1,2723 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>《小食神大富翁》- 中華小廚神六大類營養食物大冒險</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="min-h-screen flex flex-col items-center justify-between text-slate-800">
+
+  <!-- ================= 頂部狀態列 (圖標加大、字體加大、清晰醒目、便於點擊) ================= -->
+  <header class="w-full max-w-6xl lg:max-w-7xl mx-auto px-2.5 sm:px-4 py-2 sm:py-3 flex flex-col md:flex-row items-center justify-between gap-2 sm:gap-3.5 z-30">
+    <!-- 主角與遊戲名稱 (行動端橫向排開：左邊 Logo+關卡，右邊快速開關音效與重置) -->
+    <div class="w-full md:w-auto flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2 sm:gap-3 cursor-pointer" onclick="resetToBoard()">
+        <div class="w-11 h-11 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-2xl bg-amber-100 border-2 border-amber-400 p-1 sm:p-1.5 shadow-md flex items-center justify-center flex-shrink-0">
+          <div id="nav-chef-avatar" class="w-full h-full"></div>
+        </div>
+        <div>
+          <h1 class="font-black text-base sm:text-xl md:text-2xl lg:text-3xl text-amber-950 flex items-center gap-1 sm:gap-2">
+            🎲 中華小廚神大富翁
+          </h1>
+          <div class="flex items-center gap-2 mt-0.5">
+            <span id="round-badge" class="text-xs sm:text-sm md:text-base bg-gradient-to-r from-amber-400 to-orange-400 text-amber-950 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full font-black shadow-sm">第 1 關：小暖身</span>
+            
+            <!-- 闖關學習活動計時器 (目標 20 分鐘完成) -->
+            <div id="game-timer-container" class="flex items-center gap-1 bg-white border-2 border-emerald-400 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-black text-emerald-950 shadow-2xs transition" title="闖關計時（目標 20 分鐘內完成，超時仍可繼續遊玩）">
+              <span class="text-sm">⏱️</span>
+              <span id="game-timer-text">00:00</span>
+              <span id="game-timer-target" class="text-[10px] text-slate-500 font-bold hidden sm:inline">/ 20分</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 行動端專用快捷開關 (音效、重置) -->
+      <div class="flex md:hidden items-center gap-1.5">
+        <button id="sound-btn-mobile" onclick="handleSoundToggle()" class="w-9 h-9 sm:w-10 sm:h-10 bg-white hover:bg-amber-50 border-2 border-amber-300 rounded-xl text-lg flex items-center justify-center shadow-sm transition active:scale-95" title="切換音效">
+          🔊
+        </button>
+        <button onclick="handleResetGame()" class="w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 border-2 border-slate-300 rounded-xl text-lg flex items-center justify-center text-slate-700 shadow-sm transition active:scale-95" title="換下一位同學重置">
+          🔄
+        </button>
+      </div>
+    </div>
+
+    <!-- 當前關卡衛福部六口訣膠囊 (動態更新) -->
+    <div class="w-full md:w-auto bg-gradient-to-r from-amber-100 to-orange-100 border-2 border-amber-300 px-3 sm:px-5 py-1.5 sm:py-2 md:py-2.5 rounded-xl sm:rounded-2xl text-xs sm:text-sm md:text-base lg:text-lg font-black text-amber-950 flex items-center justify-center gap-2 shadow-sm text-center">
+      <span class="text-base sm:text-lg md:text-xl">📢</span>
+      <span id="current-slogan-text">飯跟蔬菜一樣多 ‧ 未精製全穀營養多</span>
+    </div>
+
+    <!-- 功能與狀態按鈕 (加大圖標、立體手感、自適應響應工具列) -->
+    <div class="flex items-center justify-center md:justify-end gap-1.5 sm:gap-2 md:gap-3 flex-wrap w-full md:w-auto">
+      <!-- 答對題數 / 星星複習筆記 -->
+      <button onclick="openAnsweredReviewModal()" class="flex items-center gap-1.5 bg-white hover:bg-amber-50 border-2 border-amber-300 px-2.5 sm:px-3.5 py-1.5 sm:py-2 md:py-2.5 rounded-xl sm:rounded-2xl text-xs sm:text-sm md:text-base font-black text-amber-950 shadow-sm transition active:scale-95 cursor-pointer" title="查看答對題庫與複習筆記 (點擊複習)">
+        <span class="text-base sm:text-lg md:text-xl">⭐</span>
+        <span id="header-stars" class="text-xs sm:text-base md:text-lg font-black">0</span>
+        <span class="hidden sm:inline text-xs bg-amber-100 text-amber-900 px-2 py-0.5 rounded-full font-bold">題庫複習</span>
+      </button>
+
+      <!-- 及第師父的庇護金牌 -->
+      <div id="header-shield-container" class="flex items-center gap-1 sm:gap-1.5 bg-amber-100/80 border-2 border-amber-300 px-2.5 sm:px-3 py-1.5 sm:py-2 md:py-2.5 rounded-xl sm:rounded-2xl text-xs sm:text-sm md:text-base font-black text-amber-950 shadow-sm" title="及第師父的廚神庇護金牌（可抵擋命運考驗退步）">
+        <span class="text-base sm:text-lg md:text-xl">🛡️</span>
+        <span id="header-shield-count" class="text-xs sm:text-base md:text-lg font-black">0</span>
+      </div>
+
+      <!-- 食材背包 -->
+      <button onclick="openInventoryModal()" class="flex items-center gap-1 sm:gap-2 bg-white hover:bg-amber-50 border-2 border-amber-300 px-2.5 sm:px-4 py-1.5 sm:py-2 md:py-2.5 rounded-xl sm:rounded-2xl text-xs sm:text-sm md:text-base font-black text-amber-950 shadow-sm transition active:scale-95" title="食材庫存背包">
+        <span class="text-base sm:text-lg md:text-xl">🎒</span>
+        <span id="header-pantry-count" class="text-xs sm:text-base md:text-lg font-black">0</span>
+      </button>
+
+      <!-- 劇情對話回顧 -->
+      <button onclick="openCurrentStoryModal()" class="flex items-center gap-1 sm:gap-2 bg-white hover:bg-amber-50 border-2 border-amber-300 px-2.5 sm:px-4 py-1.5 sm:py-2 md:py-2.5 rounded-xl sm:rounded-2xl text-xs sm:text-sm md:text-base font-black text-amber-950 shadow-sm transition active:scale-95" title="查看本關劇情對話">
+        <span class="text-base sm:text-lg md:text-xl">📜</span>
+        <span class="hidden sm:inline">劇情</span>
+      </button>
+
+      <!-- 食譜圖鑑 -->
+      <button onclick="openRecipeBookModal()" class="flex items-center gap-1 sm:gap-2 bg-white hover:bg-amber-50 border-2 border-amber-300 px-2.5 sm:px-4 py-1.5 sm:py-2 md:py-2.5 rounded-xl sm:rounded-2xl text-xs sm:text-sm md:text-base font-black text-amber-950 shadow-sm transition active:scale-95" title="特級料理圖鑑">
+        <span class="text-base sm:text-lg md:text-xl">📖</span>
+        <span class="hidden sm:inline">食譜</span>
+      </button>
+
+      <!-- 關卡地圖 -->
+      <button onclick="openStagesModal()" class="flex items-center gap-1 sm:gap-2 bg-white hover:bg-amber-50 border-2 border-amber-300 px-2.5 sm:px-4 py-1.5 sm:py-2 md:py-2.5 rounded-xl sm:rounded-2xl text-xs sm:text-sm md:text-base font-black text-amber-950 shadow-sm transition active:scale-95" title="五大修煉關卡進度地圖">
+        <span class="text-base sm:text-lg md:text-xl">🗺️</span>
+        <span class="hidden sm:inline">關卡</span>
+      </button>
+
+      <!-- 遊戲指南 -->
+      <button onclick="openGuideModal()" class="flex items-center gap-1 sm:gap-2 bg-white hover:bg-amber-50 border-2 border-amber-300 px-2.5 sm:px-4 py-1.5 sm:py-2 md:py-2.5 rounded-xl sm:rounded-2xl text-xs sm:text-sm md:text-base font-black text-amber-950 shadow-sm transition active:scale-95" title="遊戲簡易玩法">
+        <span class="text-base sm:text-lg md:text-xl">❓</span>
+        <span class="hidden sm:inline">指南</span>
+      </button>
+
+      <!-- 電腦端音效開關 -->
+      <button id="sound-btn" onclick="handleSoundToggle()" class="hidden md:flex w-11 h-11 md:w-12 md:h-12 bg-white hover:bg-amber-50 border-2 border-amber-300 rounded-2xl text-xl md:text-2xl items-center justify-center shadow-sm transition active:scale-95" title="切換音效">
+        🔊
+      </button>
+
+      <!-- 電腦端重置按鈕 -->
+      <button onclick="handleResetGame()" class="hidden md:flex w-11 h-11 md:w-12 md:h-12 bg-slate-100 hover:bg-slate-200 border-2 border-slate-300 rounded-2xl text-xl md:text-2xl items-center justify-center text-slate-700 shadow-sm transition active:scale-95" title="換下一位同學重置">
+        🔄
+      </button>
+    </div>
+  </header>
+
+  <!-- ================= 主棋盤舞台 (大富翁擲骰子主頁：響應式自適應縮放) ================= -->
+  <main class="w-full max-w-6xl lg:max-w-7xl flex-1 px-2 sm:px-3 md:px-4 py-1 flex flex-col justify-center items-center">
+
+    <!-- 16 格環形棋盤 (5x5 圍繞佈局，自適應響應式格子) -->
+    <div id="board-container" class="w-full grid grid-cols-5 gap-1.5 sm:gap-2.5 md:gap-3.5 my-1 sm:my-1.5 relative select-none">
+      
+      <!-- ================= 第 1 列 (0, 1, 2, 3, 4) ================= -->
+      <!-- Tile 0: 起點廚房 -->
+      <div id="tile-0" class="board-tile relative bg-amber-200 border-2 border-amber-500 rounded-xl sm:rounded-2xl p-1 sm:p-1.5 md:p-2 flex flex-col items-center justify-between h-20 sm:h-24 md:h-28 lg:h-32 xl:h-36 shadow-sm">
+        <span class="text-[10px] sm:text-xs md:text-sm font-black text-amber-950 w-full text-left leading-none">🚩 0</span>
+        <span class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl my-auto pointer-events-none select-none">🍳</span>
+        <span class="text-[10px] sm:text-xs md:text-sm lg:text-base font-black text-amber-950 text-center truncate w-full leading-tight">起點廚房</span>
+        <div id="pawn-container-0" class="absolute inset-0 pointer-events-none flex items-center justify-center"></div>
+      </div>
+
+      <!-- Tile 1: 答題 -->
+      <div id="tile-1" class="board-tile relative bg-emerald-100 border-2 border-emerald-400 rounded-xl sm:rounded-2xl p-1 sm:p-1.5 md:p-2 flex flex-col items-center justify-between h-20 sm:h-24 md:h-28 lg:h-32 xl:h-36 shadow-sm">
+        <span class="text-[10px] sm:text-xs md:text-sm font-black text-emerald-800 w-full text-left leading-none">1</span>
+        <span class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl my-auto pointer-events-none select-none">🎯</span>
+        <span class="text-[10px] sm:text-xs md:text-sm lg:text-base font-black text-emerald-950 text-center truncate w-full leading-tight">答題試煉</span>
+        <div id="pawn-container-1" class="absolute inset-0 pointer-events-none flex items-center justify-center"></div>
+      </div>
+
+      <!-- Tile 2: 答題 -->
+      <div id="tile-2" class="board-tile relative bg-emerald-100 border-2 border-emerald-400 rounded-xl sm:rounded-2xl p-1 sm:p-1.5 md:p-2 flex flex-col items-center justify-between h-20 sm:h-24 md:h-28 lg:h-32 xl:h-36 shadow-sm">
+        <span class="text-[10px] sm:text-xs md:text-sm font-black text-emerald-800 w-full text-left leading-none">2</span>
+        <span class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl my-auto pointer-events-none select-none">🎯</span>
+        <span class="text-[10px] sm:text-xs md:text-sm lg:text-base font-black text-emerald-950 text-center truncate w-full leading-tight">答題試煉</span>
+        <div id="pawn-container-2" class="absolute inset-0 pointer-events-none flex items-center justify-center"></div>
+      </div>
+
+      <!-- Tile 3: 答題 -->
+      <div id="tile-3" class="board-tile relative bg-emerald-100 border-2 border-emerald-400 rounded-xl sm:rounded-2xl p-1 sm:p-1.5 md:p-2 flex flex-col items-center justify-between h-20 sm:h-24 md:h-28 lg:h-32 xl:h-36 shadow-sm">
+        <span class="text-[10px] sm:text-xs md:text-sm font-black text-emerald-800 w-full text-left leading-none">3</span>
+        <span class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl my-auto pointer-events-none select-none">🎯</span>
+        <span class="text-[10px] sm:text-xs md:text-sm lg:text-base font-black text-emerald-950 text-center truncate w-full leading-tight">答題試煉</span>
+        <div id="pawn-container-3" class="absolute inset-0 pointer-events-none flex items-center justify-center"></div>
+      </div>
+
+      <!-- Tile 4: 命運考驗 1 -->
+      <div id="tile-4" class="board-tile relative bg-rose-100 border-2 border-rose-400 rounded-xl sm:rounded-2xl p-1 sm:p-1.5 md:p-2 flex flex-col items-center justify-between h-20 sm:h-24 md:h-28 lg:h-32 xl:h-36 shadow-sm">
+        <span class="text-[10px] sm:text-xs md:text-sm font-black text-rose-800 w-full text-left leading-none">4</span>
+        <span class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl my-auto animate-pulse pointer-events-none select-none">⚡</span>
+        <span class="text-[10px] sm:text-xs md:text-sm lg:text-base font-black text-rose-950 text-center truncate w-full leading-tight">命運考驗</span>
+        <div id="pawn-container-4" class="absolute inset-0 pointer-events-none flex items-center justify-center"></div>
+      </div>
+
+      <!-- ================= 第 2 列 (左側 15，中央區跨3行3列，右側 5) ================= -->
+      <!-- Tile 15: 答題試煉 -->
+      <div id="tile-15" class="board-tile relative bg-emerald-100 border-2 border-emerald-400 rounded-xl sm:rounded-2xl p-1 sm:p-1.5 md:p-2 flex flex-col items-center justify-between h-20 sm:h-24 md:h-28 lg:h-32 xl:h-36 shadow-sm">
+        <span class="text-[10px] sm:text-xs md:text-sm font-black text-emerald-800 w-full text-left leading-none">15</span>
+        <span class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl my-auto pointer-events-none select-none">🎯</span>
+        <span class="text-[10px] sm:text-xs md:text-sm lg:text-base font-black text-emerald-950 text-center truncate w-full leading-tight">答題試煉</span>
+        <div id="pawn-container-15" class="absolute inset-0 pointer-events-none flex items-center justify-center"></div>
+      </div>
+
+      <!-- 中央操作台 (佔 3x3 空間，以中華料理目標與擲骰為中心) -->
+      <div class="col-span-3 row-span-3 bg-white/95 border-2 border-amber-300 rounded-2xl sm:rounded-3xl p-2 sm:p-4 md:p-6 flex flex-col items-center justify-between text-center shadow-lg relative overflow-hidden">
+        
+        <!-- 當前本關目標特級食譜卡片 -->
+        <div class="w-full bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-200 rounded-xl sm:rounded-2xl p-1.5 sm:p-2.5 md:p-3 flex flex-col sm:flex-row items-center justify-between gap-1.5 sm:gap-3 shadow-sm">
+          <div class="flex items-center gap-1.5 sm:gap-3">
+            <div id="center-dish-svg" class="w-10 h-10 sm:w-16 sm:h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 flex-shrink-0 animate-bounce"></div>
+            <div class="text-left">
+              <div class="text-[9px] sm:text-xs md:text-sm text-amber-700 font-bold">本關解鎖特級料理：</div>
+              <div id="center-dish-name" class="font-black text-xs sm:text-base md:text-lg lg:text-xl text-amber-950 truncate max-w-[130px] sm:max-w-none">黃金元氣蛋包飯全餐</div>
+              <div id="center-dish-slogan" class="text-[10px] sm:text-xs md:text-sm text-slate-500 font-bold hidden sm:block">收集食材回起點大開火</div>
+            </div>
+          </div>
+          <!-- 收集進度食材小圖示勾選列 -->
+          <div id="center-dish-ing-status" class="flex gap-1 sm:gap-2 flex-wrap justify-center"></div>
+        </div>
+
+        <!-- 3D 骰子擲骰核心互動區 (整個區域均可點擊觸發擲骰) -->
+        <div onclick="handleRollDice()" class="my-auto flex flex-col items-center gap-1.5 sm:gap-3 cursor-pointer group active:scale-95 transition-all w-full">
+          <div class="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4">
+            <!-- 骰子面 -->
+            <div id="dice-cube" class="w-14 h-14 sm:w-18 sm:h-18 md:w-24 md:h-24 lg:w-28 lg:h-28 bg-gradient-to-br from-amber-400 via-orange-500 to-amber-500 group-hover:from-amber-500 group-hover:to-orange-600 rounded-xl sm:rounded-2xl shadow-pop flex items-center justify-center border-2 border-white select-none transition-all duration-300 flex-shrink-0">
+              <span id="dice-num" class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-white font-black drop-shadow">🎲</span>
+            </div>
+
+            <!-- 擲骰大按鈕 -->
+            <button id="roll-btn" class="bg-gradient-to-r from-amber-500 to-orange-500 group-hover:from-amber-600 group-hover:to-orange-600 text-white font-black px-4 py-2 sm:px-7 sm:py-3.5 md:px-8 md:py-4 rounded-xl sm:rounded-2xl shadow-pop text-xs sm:text-base md:text-xl lg:text-2xl transition pointer-events-none flex items-center gap-1.5 sm:gap-2.5">
+              <span>🎲</span>
+              <span>擲骰子出發</span>
+            </button>
+          </div>
+
+          <!-- 遊戲動態操作指引 -->
+          <div id="dice-tip" class="text-[10px] sm:text-xs md:text-base lg:text-lg font-black text-amber-900 bg-amber-100/90 px-2.5 py-1 sm:px-4 sm:py-1.5 rounded-full border border-amber-300 animate-float max-w-full text-center truncate sm:whitespace-normal">
+            👉 點擊骰子前進，回答六大類飲食題目收集食材！
+          </div>
+        </div>
+
+        <!-- 廚房開煮按鈕 (當集齊食材時亮起) -->
+        <div class="w-full pt-1.5 sm:pt-2.5 border-t border-amber-200 flex flex-col sm:flex-row items-center justify-between gap-1 sm:gap-3">
+          <div id="round-status-label" class="text-[10px] sm:text-xs md:text-base font-bold text-amber-900 text-center sm:text-left">
+            集齊指定食材後回起點開火 🍳
+          </div>
+          <button id="cook-now-btn" onclick="openCookingModal()" disabled class="bg-orange-500 hover:bg-orange-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-black px-3.5 py-1.5 sm:px-5 sm:py-2.5 md:px-6 md:py-3 rounded-xl sm:rounded-2xl text-xs sm:text-sm md:text-base font-black shadow-pop transition active:scale-95 flex items-center gap-1.5 flex-shrink-0">
+            <span>🔥</span>
+            <span>開火翻炒</span>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Tile 5: 答題 -->
+      <div id="tile-5" class="board-tile relative bg-emerald-100 border-2 border-emerald-400 rounded-xl sm:rounded-2xl p-1 sm:p-1.5 md:p-2 flex flex-col items-center justify-between h-20 sm:h-24 md:h-28 lg:h-32 xl:h-36 shadow-sm">
+        <span class="text-[10px] sm:text-xs md:text-sm font-black text-emerald-800 w-full text-left leading-none">5</span>
+        <span class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl my-auto pointer-events-none select-none">🎯</span>
+        <span class="text-[10px] sm:text-xs md:text-sm lg:text-base font-black text-emerald-950 text-center truncate w-full leading-tight">答題試煉</span>
+        <div id="pawn-container-5" class="absolute inset-0 pointer-events-none flex items-center justify-center"></div>
+      </div>
+
+      <!-- ================= 第 3 列 (左側 14，右側 6) ================= -->
+      <!-- Tile 14: 答題 -->
+      <div id="tile-14" class="board-tile relative bg-emerald-100 border-2 border-emerald-400 rounded-xl sm:rounded-2xl p-1 sm:p-1.5 md:p-2 flex flex-col items-center justify-between h-20 sm:h-24 md:h-28 lg:h-32 xl:h-36 shadow-sm">
+        <span class="text-[10px] sm:text-xs md:text-sm font-black text-emerald-800 w-full text-left leading-none">14</span>
+        <span class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl my-auto pointer-events-none select-none">🎯</span>
+        <span class="text-[10px] sm:text-xs md:text-sm lg:text-base font-black text-emerald-950 text-center truncate w-full leading-tight">答題試煉</span>
+        <div id="pawn-container-14" class="absolute inset-0 pointer-events-none flex items-center justify-center"></div>
+      </div>
+
+      <!-- Tile 6: 答題 -->
+      <div id="tile-6" class="board-tile relative bg-emerald-100 border-2 border-emerald-400 rounded-xl sm:rounded-2xl p-1 sm:p-1.5 md:p-2 flex flex-col items-center justify-between h-20 sm:h-24 md:h-28 lg:h-32 xl:h-36 shadow-sm">
+        <span class="text-[10px] sm:text-xs md:text-sm font-black text-emerald-800 w-full text-left leading-none">6</span>
+        <span class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl my-auto pointer-events-none select-none">🎯</span>
+        <span class="text-[10px] sm:text-xs md:text-sm lg:text-base font-black text-emerald-950 text-center truncate w-full leading-tight">答題試煉</span>
+        <div id="pawn-container-6" class="absolute inset-0 pointer-events-none flex items-center justify-center"></div>
+      </div>
+
+      <!-- ================= 第 4 列 (左側 13，右側 7) ================= -->
+      <!-- Tile 13: 答題 -->
+      <div id="tile-13" class="board-tile relative bg-emerald-100 border-2 border-emerald-400 rounded-xl sm:rounded-2xl p-1 sm:p-1.5 md:p-2 flex flex-col items-center justify-between h-20 sm:h-24 md:h-28 lg:h-32 xl:h-36 shadow-sm">
+        <span class="text-[10px] sm:text-xs md:text-sm font-black text-emerald-800 w-full text-left leading-none">13</span>
+        <span class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl my-auto pointer-events-none select-none">🎯</span>
+        <span class="text-[10px] sm:text-xs md:text-sm lg:text-base font-black text-emerald-950 text-center truncate w-full leading-tight">答題試煉</span>
+        <div id="pawn-container-13" class="absolute inset-0 pointer-events-none flex items-center justify-center"></div>
+      </div>
+
+      <!-- Tile 7: 答題 -->
+      <div id="tile-7" class="board-tile relative bg-emerald-100 border-2 border-emerald-400 rounded-xl sm:rounded-2xl p-1 sm:p-1.5 md:p-2 flex flex-col items-center justify-between h-20 sm:h-24 md:h-28 lg:h-32 xl:h-36 shadow-sm">
+        <span class="text-[10px] sm:text-xs md:text-sm font-black text-emerald-800 w-full text-left leading-none">7</span>
+        <span class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl my-auto pointer-events-none select-none">🎯</span>
+        <span class="text-[10px] sm:text-xs md:text-sm lg:text-base font-black text-emerald-950 text-center truncate w-full leading-tight">答題試煉</span>
+        <div id="pawn-container-7" class="absolute inset-0 pointer-events-none flex items-center justify-center"></div>
+      </div>
+
+      <!-- ================= 第 5 列 (12, 11, 10, 9, 8) ================= -->
+      <!-- Tile 12: 命運考驗 2 -->
+      <div id="tile-12" class="board-tile relative bg-rose-100 border-2 border-rose-400 rounded-xl sm:rounded-2xl p-1 sm:p-1.5 md:p-2 flex flex-col items-center justify-between h-20 sm:h-24 md:h-28 lg:h-32 xl:h-36 shadow-sm">
+        <span class="text-[10px] sm:text-xs md:text-sm font-black text-rose-800 w-full text-left leading-none">12</span>
+        <span class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl my-auto animate-pulse pointer-events-none select-none">⚡</span>
+        <span class="text-[10px] sm:text-xs md:text-sm lg:text-base font-black text-rose-950 text-center truncate w-full leading-tight">命運考驗</span>
+        <div id="pawn-container-12" class="absolute inset-0 pointer-events-none flex items-center justify-center"></div>
+      </div>
+
+      <!-- Tile 11: 答題 -->
+      <div id="tile-11" class="board-tile relative bg-emerald-100 border-2 border-emerald-400 rounded-xl sm:rounded-2xl p-1 sm:p-1.5 md:p-2 flex flex-col items-center justify-between h-20 sm:h-24 md:h-28 lg:h-32 xl:h-36 shadow-sm">
+        <span class="text-[10px] sm:text-xs md:text-sm font-black text-emerald-800 w-full text-left leading-none">11</span>
+        <span class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl my-auto pointer-events-none select-none">🎯</span>
+        <span class="text-[10px] sm:text-xs md:text-sm lg:text-base font-black text-emerald-950 text-center truncate w-full leading-tight">答題試煉</span>
+        <div id="pawn-container-11" class="absolute inset-0 pointer-events-none flex items-center justify-center"></div>
+      </div>
+
+      <!-- Tile 10: 答題 -->
+      <div id="tile-10" class="board-tile relative bg-emerald-100 border-2 border-emerald-400 rounded-xl sm:rounded-2xl p-1 sm:p-1.5 md:p-2 flex flex-col items-center justify-between h-20 sm:h-24 md:h-28 lg:h-32 xl:h-36 shadow-sm">
+        <span class="text-[10px] sm:text-xs md:text-sm font-black text-emerald-800 w-full text-left leading-none">10</span>
+        <span class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl my-auto pointer-events-none select-none">🎯</span>
+        <span class="text-[10px] sm:text-xs md:text-sm lg:text-base font-black text-emerald-950 text-center truncate w-full leading-tight">答題試煉</span>
+        <div id="pawn-container-10" class="absolute inset-0 pointer-events-none flex items-center justify-center"></div>
+      </div>
+
+      <!-- Tile 9: 答題 -->
+      <div id="tile-9" class="board-tile relative bg-emerald-100 border-2 border-emerald-400 rounded-xl sm:rounded-2xl p-1 sm:p-1.5 md:p-2 flex flex-col items-center justify-between h-20 sm:h-24 md:h-28 lg:h-32 xl:h-36 shadow-sm">
+        <span class="text-[10px] sm:text-xs md:text-sm font-black text-emerald-800 w-full text-left leading-none">9</span>
+        <span class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl my-auto pointer-events-none select-none">🎯</span>
+        <span class="text-[10px] sm:text-xs md:text-sm lg:text-base font-black text-emerald-950 text-center truncate w-full leading-tight">答題試煉</span>
+        <div id="pawn-container-9" class="absolute inset-0 pointer-events-none flex items-center justify-center"></div>
+      </div>
+
+      <!-- Tile 8: 幸運機會 (全棋盤唯一 1 格) -->
+      <div id="tile-8" class="board-tile relative bg-purple-100 border-2 border-purple-400 rounded-xl sm:rounded-2xl p-1 sm:p-1.5 md:p-2 flex flex-col items-center justify-between h-20 sm:h-24 md:h-28 lg:h-32 xl:h-36 shadow-sm">
+        <span class="text-[10px] sm:text-xs md:text-sm font-black text-purple-800 w-full text-left leading-none">8</span>
+        <span class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl my-auto animate-pulse pointer-events-none select-none">❓</span>
+        <span class="text-[10px] sm:text-xs md:text-sm lg:text-base font-black text-purple-950 text-center truncate w-full leading-tight">幸運機會</span>
+        <div id="pawn-container-8" class="absolute inset-0 pointer-events-none flex items-center justify-center"></div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ================= 彈窗 1: 中華小廚神飲食試煉問答 (重點：題目必出、解析詳盡、大字大圖) ================= -->
+  <div id="modal-quiz" class="fixed inset-0 z-50 bg-black/65 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 hidden">
+    <div class="w-full max-w-xl md:max-w-2xl bg-white border-4 border-emerald-400 rounded-3xl p-5 sm:p-7 shadow-2xl flex flex-col items-center text-center animate-jelly max-h-[92vh] overflow-y-auto">
+      
+      <!-- 類別與關卡標籤 -->
+      <div class="flex items-center gap-2.5 mb-2.5">
+        <span id="quiz-stage-tag" class="text-sm md:text-base bg-amber-100 text-amber-900 border border-amber-300 font-black px-3.5 py-1 rounded-full">
+          【小暖身】
+        </span>
+        <span id="quiz-category-tag" class="text-sm md:text-base bg-emerald-500 text-white font-black px-3.5 py-1 rounded-full shadow-sm">
+          🎯 全穀雜糧類
+        </span>
+      </div>
+
+      <!-- 食物或題目視覺大圖示 -->
+      <div id="quiz-food-img" class="w-28 h-28 md:w-36 md:h-36 my-2 drop-shadow animate-bounce"></div>
+
+      <!-- 題目文字 (大字清晰) -->
+      <h3 id="quiz-question-title" class="text-lg sm:text-xl md:text-2xl font-black text-slate-900 my-2.5 leading-relaxed text-left px-2">
+        題目載入中...
+      </h3>
+
+      <!-- 選項按鈕區 (是非題或四選一) -->
+      <div id="quiz-options-container" class="w-full flex flex-col gap-3 my-3"></div>
+
+      <!-- 答案解析與營養知識回饋 (答題後展開) -->
+      <div id="quiz-result-msg" class="w-full p-4 rounded-2xl text-sm md:text-base lg:text-lg font-bold hidden text-left space-y-2 transition-all"></div>
+
+      <!-- 關閉確認鍵 (答題後出現) -->
+      <button id="quiz-close-btn" onclick="closeQuizModal()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-3.5 rounded-2xl shadow-pop text-base md:text-lg mt-2.5 hidden transition active:scale-95">
+        收下食材放入背包 🎒
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= 彈窗 2: 中華小廚神故事對話系統 (多頁劇情、大字對話框) ================= -->
+  <div id="modal-story" class="fixed inset-0 z-50 bg-black/65 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 hidden">
+    <div class="w-full max-w-xl md:max-w-2xl bg-gradient-to-b from-amber-50 to-orange-50 border-4 border-amber-400 rounded-3xl p-5 sm:p-7 shadow-2xl flex flex-col animate-jelly relative">
+      
+      <!-- 標題列與跳過劇情按鈕 -->
+      <div class="flex items-center justify-between pb-2.5 mb-3 border-b border-amber-200">
+        <h4 id="story-title" class="font-black text-base md:text-lg lg:text-xl text-amber-950 flex items-center gap-2">
+          📜 中華小廚神修行傳說
+        </h4>
+        <button onclick="closeStoryModal()" class="text-xs sm:text-sm text-amber-800 hover:text-amber-950 bg-amber-200/80 px-3 py-1.5 rounded-full font-bold transition">
+          跳過劇情 ✕
+        </button>
+      </div>
+
+      <!-- 角色頭像與對話氣泡 -->
+      <div class="flex items-start gap-4 my-2.5">
+        <!-- 說話角色頭像 -->
+        <div class="w-24 h-24 md:w-32 md:h-32 rounded-2xl bg-white border-2 border-amber-300 p-1.5 shadow-md flex-shrink-0 flex items-center justify-center">
+          <div id="story-avatar" class="w-full h-full animate-bounce"></div>
+        </div>
+
+        <!-- 對話內容氣泡 -->
+        <div class="speech-bubble flex-1 p-4 shadow-sm">
+          <div id="story-speaker" class="inline-block bg-amber-500 text-white text-xs sm:text-sm md:text-base font-black px-3 py-1 rounded-full mb-2 shadow-sm">
+            【見習廚神】小杰
+          </div>
+          <div id="story-text" class="text-base sm:text-lg md:text-xl font-bold text-amber-950 leading-relaxed min-h-[5rem]">
+            劇情文字載入中...
+          </div>
+        </div>
+      </div>
+
+      <!-- 底部頁數與翻頁控制按鈕 -->
+      <div class="flex items-center justify-between pt-3.5 mt-2 border-t border-amber-200">
+        <!-- 頁碼指示器 (如 第 1 / 3 頁) -->
+        <span id="story-page-indicator" class="text-xs sm:text-sm md:text-base font-black text-amber-900 bg-amber-200/60 px-4 py-1.5 rounded-full">
+          第 1 / 3 頁
+        </span>
+
+        <div class="flex items-center gap-2.5">
+          <!-- 上一頁 -->
+          <button id="story-prev-btn" onclick="prevStoryPage()" class="bg-white hover:bg-amber-100 border border-amber-300 text-amber-950 font-black px-4 py-2 rounded-xl text-xs sm:text-sm md:text-base shadow-sm transition active:scale-95 disabled:opacity-30 disabled:pointer-events-none">
+            ◀ 上一頁
+          </button>
+
+          <!-- 下一頁 / 接受挑戰 -->
+          <button id="story-next-btn" onclick="nextStoryPage()" class="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 text-white font-black px-5 py-2 rounded-xl text-xs sm:text-sm md:text-base shadow-pop transition active:scale-95">
+            下一頁 ➔
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= 彈窗 3: 遊戲簡易引導操作 (遊戲玩法說明) ================= -->
+  <div id="modal-guide" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 hidden">
+    <div class="w-full max-w-lg md:max-w-xl bg-white border-4 border-amber-400 rounded-3xl p-5 sm:p-7 shadow-2xl flex flex-col animate-jelly max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b pb-2.5 mb-3.5">
+        <h3 class="font-black text-lg md:text-xl text-amber-950 flex items-center gap-2">
+          🎮 簡易引導操作：像玩遊戲一樣闖關！
+        </h3>
+        <button onclick="closeGuideModal()" class="text-slate-600 font-bold px-2 py-1 text-base">✕</button>
+      </div>
+
+      <div class="space-y-3.5 text-xs sm:text-sm md:text-base text-slate-800 leading-relaxed font-bold">
+        <div class="bg-amber-50 p-3.5 rounded-2xl border border-amber-200 flex items-start gap-3">
+          <span class="text-3xl">🎲</span>
+          <div>
+            <div class="font-black text-amber-950 text-base md:text-lg">步驟 1：擲出命運骰子</div>
+            <div class="text-slate-600 text-xs sm:text-sm">點擊中央大骰子，主角小杰就會依照點數在 16 格大富翁棋盤上歡樂前進！</div>
+          </div>
+        </div>
+
+        <div class="bg-emerald-50 p-3.5 rounded-2xl border border-emerald-200 flex items-start gap-3">
+          <span class="text-3xl">🎯</span>
+          <div>
+            <div class="font-black text-emerald-950 text-base md:text-lg">步驟 2：答題拿食材與星星</div>
+            <div class="text-slate-600 text-xs sm:text-sm">踩中綠色「答題試煉格」，回答六大類營養問題！答對獲得指定食材與廚神星星 ⭐！</div>
+          </div>
+        </div>
+
+        <div class="bg-purple-50 p-3.5 rounded-2xl border border-purple-200 flex items-start gap-3">
+          <span class="text-3xl">❓</span>
+          <div>
+            <div class="font-black text-purple-950 text-base md:text-lg">步驟 3：幸運機會與命運考驗</div>
+            <div class="text-slate-600 text-xs sm:text-sm">多喝水或運動等好習慣可獲得額外獎勵；偷吃油炸零食會退步喔！</div>
+          </div>
+        </div>
+
+        <div class="bg-orange-50 p-3.5 rounded-2xl border border-orange-200 flex items-start gap-3">
+          <span class="text-3xl">🍳</span>
+          <div>
+            <div class="font-black text-orange-950 text-base md:text-lg">步驟 4：大廚房開火升級晉級</div>
+            <div class="text-slate-600 text-xs sm:text-sm">每關集齊指定食材回起點大開火，做出特級食譜，解鎖下一關劇情與考驗！</div>
+          </div>
+        </div>
+      </div>
+
+      <button onclick="closeGuideModal()" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-black py-3 rounded-2xl shadow-pop text-base md:text-lg mt-4 transition active:scale-95">
+        我知道了，開始遊玩！🎲
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= 彈窗 4: 機會格彈窗 (幸運奇遇見聞劇情) ================= -->
+  <div id="modal-chance" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 hidden">
+    <div class="w-full max-w-lg md:max-w-xl bg-gradient-to-b from-purple-50 via-white to-purple-50 border-4 border-purple-400 rounded-3xl p-5 sm:p-7 shadow-2xl flex flex-col items-center text-center animate-jelly">
+      
+      <!-- 標題膠囊 -->
+      <div class="flex items-center gap-2.5 mb-2.5">
+        <span class="text-sm bg-purple-600 text-white font-black px-4 py-1 rounded-full shadow-sm">
+          ❓ 幸運奇遇見聞
+        </span>
+        <h4 id="chance-title" class="font-black text-base md:text-lg lg:text-xl text-purple-950">【終南山靈泉奇遇】</h4>
+      </div>
+
+      <!-- 角色人物遇見與頭像 -->
+      <div class="flex items-center gap-3.5 my-2.5 w-full bg-purple-100/70 p-3 rounded-2xl border border-purple-200">
+        <div class="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-white border-2 border-purple-300 p-1 flex items-center justify-center flex-shrink-0 shadow-xs">
+          <div id="chance-avatar" class="w-full h-full flex items-center justify-center text-3xl md:text-4xl animate-bounce">💧</div>
+        </div>
+        <div class="text-left flex-1">
+          <div id="chance-speaker" class="text-sm md:text-base font-black text-purple-800">【山林老隱士】</div>
+          <div class="text-xs sm:text-sm text-purple-600 font-bold">在修行旅途中偶遇奇遇...</div>
+        </div>
+      </div>
+
+      <!-- 劇情故事文字 -->
+      <div class="w-full bg-white border border-purple-200 rounded-2xl p-4 my-2.5 text-sm md:text-base lg:text-lg font-bold text-slate-800 leading-relaxed text-left shadow-xs">
+        <p id="chance-story">路過終南山清泉，老隱士正在取山泉烹茶：「晨起飲甘泉，能通經活血、精神百倍！」小杰暢飲甘泉，通體舒暢！</p>
+      </div>
+
+      <!-- 獎勵效果膠囊 -->
+      <div id="chance-reward" class="w-full bg-gradient-to-r from-purple-100 to-indigo-100 border-2 border-purple-300 rounded-2xl p-3 my-2.5 text-sm md:text-base lg:text-lg font-black text-purple-950 flex items-center justify-center gap-2 shadow-sm">
+        💧 身心舒暢，獲得 1 份本關健康食材 🎁
+      </div>
+
+      <button onclick="closeChanceModal()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-black py-3 rounded-2xl shadow-pop text-base md:text-lg mt-1 transition active:scale-95">
+        收下奇遇確定 ➔
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= 彈窗 5: 命運格彈窗 (生活習慣考驗見聞) ================= -->
+  <div id="modal-fate" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 hidden">
+    <div class="w-full max-w-lg md:max-w-xl bg-gradient-to-b from-rose-50 via-white to-rose-50 border-4 border-rose-400 rounded-3xl p-5 sm:p-7 shadow-2xl flex flex-col items-center text-center animate-jelly">
+      
+      <!-- 標題膠囊 -->
+      <div class="flex items-center gap-2.5 mb-2.5">
+        <span class="text-sm bg-rose-600 text-white font-black px-4 py-1 rounded-full shadow-sm">
+          ⚡ 命運生活考驗
+        </span>
+        <h4 id="fate-title" class="font-black text-base md:text-lg lg:text-xl text-rose-950">【夜市黑油炸物陷阱】</h4>
+      </div>
+
+      <!-- 角色人物遇見與頭像 -->
+      <div class="flex items-center gap-3.5 my-2.5 w-full bg-rose-100/70 p-3 rounded-2xl border border-rose-200">
+        <div class="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-white border-2 border-rose-300 p-1 flex items-center justify-center flex-shrink-0 shadow-xs">
+          <div id="fate-avatar" class="w-full h-full flex items-center justify-center text-3xl md:text-4xl animate-bounce">🍟</div>
+        </div>
+        <div class="text-left flex-1">
+          <div id="fate-speaker" class="text-sm md:text-base font-black text-rose-800">【黑衣炸物攤販】</div>
+          <div class="text-xs sm:text-sm text-rose-600 font-bold">壞習慣引發身體抗議警報！</div>
+        </div>
+      </div>
+
+      <!-- 劇情故事文字 -->
+      <div class="w-full bg-white border border-rose-200 rounded-2xl p-4 my-2.5 text-sm md:text-base lg:text-lg font-bold text-slate-800 leading-relaxed text-left shadow-xs">
+        <p id="fate-story">巷弄飄來濃烈油耗香氣，小杰忍不住貪嘴偷吃了一大盤回鍋油炸雞排與洋芋片，肚子脹氣咕嚕痛、胃酸翻滾！</p>
+      </div>
+
+      <!-- 警惕懲罰效果膠囊 -->
+      <div id="fate-effect" class="w-full bg-gradient-to-r from-rose-100 to-amber-100 border-2 border-rose-300 rounded-2xl p-3 my-2.5 text-sm md:text-base lg:text-lg font-black text-rose-950 flex items-center justify-center gap-2 shadow-sm">
+        ⚠️ 消化不良、步履沈重，退後 1 格！
+      </div>
+
+      <button onclick="closeFateModal()" class="w-full bg-rose-600 hover:bg-rose-700 text-white font-black py-3 rounded-2xl shadow-pop-rose text-base md:text-lg mt-1 transition active:scale-95">
+        吸取教訓，繼續修行 ➔
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= 彈窗 6: 大廚房煮飯 (集齊食材開火翻炒) ================= -->
+  <div id="modal-cook" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 hidden">
+    <div class="w-full max-w-lg md:max-w-xl bg-white border-4 border-amber-400 rounded-3xl p-5 sm:p-7 shadow-2xl flex flex-col items-center text-center animate-jelly">
+      
+      <div class="text-sm bg-amber-500 text-white font-black px-4 py-1 rounded-full mb-1.5">
+        🍳 大廚房做料理
+      </div>
+      <h3 id="cook-dish-title" class="text-lg md:text-xl lg:text-2xl font-black text-amber-950 my-1.5">
+        製作【黃金元氣蛋包飯全餐】
+      </h3>
+
+      <!-- 大炒鍋與食材預覽 -->
+      <div class="w-44 h-44 md:w-56 md:h-56 my-3 relative flex items-center justify-center">
+        <div id="cook-pot-svg" class="w-full h-full"></div>
+      </div>
+
+      <!-- 食材清單 (下鍋) -->
+      <div id="cook-ingredients-list" class="flex gap-3 my-2.5"></div>
+
+      <!-- 開火翻炒按鈕 -->
+      <button id="stir-btn" onclick="handleStirPot()" class="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 text-white font-black py-3.5 rounded-2xl shadow-pop text-base md:text-lg lg:text-xl mt-2 transition active:scale-95">
+        🔥 開火翻炒！
+      </button>
+
+      <button onclick="closeCookingModal()" class="mt-2.5 text-xs sm:text-sm text-slate-500 font-bold">
+        稍後再煮
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= 彈窗 7: 料理完成慶祝卡 ================= -->
+  <div id="modal-success" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 hidden">
+    <div class="w-full max-w-md md:max-w-lg bg-white border-4 border-amber-400 rounded-3xl p-6 sm:p-7 shadow-2xl flex flex-col items-center text-center animate-jelly">
+      <div class="text-sm bg-amber-400 text-amber-950 font-black px-4 py-1 rounded-full mb-1.5">
+        ✨ 料理完成 ✨
+      </div>
+      <div id="success-dish-icon" class="w-32 h-32 md:w-40 md:h-40 my-3 animate-bounce"></div>
+      <h3 id="success-dish-name" class="text-xl md:text-2xl font-black text-amber-950">黃金元氣蛋包飯全餐</h3>
+      <p id="success-dish-desc" class="text-sm md:text-base text-amber-800 my-1.5 font-bold">全穀雜糧配鮮蔬，纖維滿滿！</p>
+      
+      <div id="success-dish-tip" class="w-full bg-amber-50 rounded-2xl p-3 my-2.5 text-xs sm:text-sm md:text-base font-black text-amber-900 border border-amber-200">
+        ⭐ 料理大成功！解鎖特級料理！
+      </div>
+
+      <button id="advance-round-btn" onclick="advanceToNextRound()" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-black py-3 rounded-2xl shadow-pop text-base md:text-lg transition active:scale-95">
+        進入下一關劇情 ➔
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= 彈窗 7.5: 集齊食材開火小提醒 ================= -->
+  <div id="modal-cook-reminder" class="fixed inset-0 z-[75] bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 hidden select-none">
+    <div class="w-full max-w-lg bg-gradient-to-b from-amber-50 via-white to-orange-50 border-4 border-amber-400 rounded-3xl p-5 sm:p-7 shadow-2xl flex flex-col items-center text-center animate-jelly">
+      
+      <!-- 廚師大跳躍動效圖標 -->
+      <div class="relative my-2">
+        <div class="w-20 h-20 sm:w-24 sm:h-24 bg-amber-100 rounded-full border-4 border-amber-300 flex items-center justify-center text-4xl sm:text-5xl shadow-md animate-bounce">
+          🍳
+        </div>
+        <span class="absolute -top-1 -right-1 text-2xl animate-pulse">✨</span>
+        <span class="absolute -bottom-1 -left-1 text-2xl animate-pulse">🔥</span>
+      </div>
+
+      <!-- 標題 -->
+      <h3 class="font-black text-xl sm:text-2xl md:text-3xl text-amber-950 mt-2">
+        🎉 食材已集齊！
+      </h3>
+      
+      <!-- 料理名與說明 -->
+      <div class="text-sm sm:text-base md:text-lg font-black text-orange-950 bg-orange-100 border border-orange-300 rounded-2xl px-4 py-2 mt-2.5 shadow-2xs">
+        本關料理【<span id="cook-reminder-dish-name" class="text-orange-600 font-black">五彩元氣全穀炊飯</span>】食材全部到齊！
+      </div>
+
+      <!-- 集齊食材圖示預覽清單 -->
+      <div id="cook-reminder-foods-list" class="flex items-center justify-center gap-2 flex-wrap mt-3">
+        <!-- JS 動態生成齊全食材 -->
+      </div>
+
+      <p class="text-xs sm:text-sm md:text-base text-slate-700 font-bold mt-3 leading-relaxed max-w-sm">
+        所有指定食材都已經收集齊全囉！<br>
+        快點擊下方按鈕，或是至起點廚房<strong>大火翻炒</strong>，完成特級美味料理吧！🔥
+      </p>
+
+      <!-- 操作按鈕 -->
+      <div class="flex flex-col sm:flex-row gap-3 w-full mt-5">
+        <button onclick="closeCookReminderModal(); openCookingModal();" class="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black py-3 sm:py-3.5 px-4 rounded-2xl text-sm sm:text-base shadow-pop transition active:scale-95 flex items-center justify-center gap-2 cursor-pointer border-2 border-amber-200">
+          <span>🔥</span>
+          <span>立即開火翻炒！</span>
+        </button>
+        <button onclick="closeCookReminderModal();" class="sm:w-32 bg-white hover:bg-amber-50 border-2 border-amber-300 text-amber-950 font-black py-3 sm:py-3.5 px-3 rounded-2xl text-xs sm:text-sm shadow-sm transition active:scale-95 cursor-pointer">
+          稍後再煮 🎲
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= 彈窗 8: 食材庫存 ================= -->
+  <div id="modal-inventory" class="fixed inset-0 z-[70] bg-black/50 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 hidden">
+    <div class="w-full max-w-xl md:max-w-2xl bg-white border-4 border-amber-300 rounded-3xl p-5 sm:p-7 shadow-2xl flex flex-col max-h-[85vh]">
+      <div class="flex justify-between items-center border-b border-amber-200 pb-3 mb-3">
+        <span class="font-black text-lg sm:text-xl md:text-2xl text-amber-950 flex items-center gap-2">🎒 食材庫存背包</span>
+        <button onclick="closeInventoryModal()" class="text-slate-400 hover:text-slate-700 font-black px-2 py-1 text-2xl transition">✕</button>
+      </div>
+      <div id="inventory-grid" class="grid grid-cols-3 sm:grid-cols-4 gap-3 sm:gap-4 overflow-y-auto p-1.5 flex-1"></div>
+    </div>
+  </div>
+
+  <!-- ================= 彈窗 9: 食譜圖鑑 ================= -->
+  <div id="modal-recipes" class="fixed inset-0 z-[70] bg-black/50 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 hidden">
+    <div class="w-full max-w-2xl md:max-w-3xl bg-white border-4 border-amber-300 rounded-3xl p-5 sm:p-7 shadow-2xl flex flex-col max-h-[85vh]">
+      <div class="flex justify-between items-center border-b border-amber-200 pb-3 mb-3">
+        <span class="font-black text-lg sm:text-xl md:text-2xl text-amber-950 flex items-center gap-2">📖 中華小廚神食譜圖鑑</span>
+        <button onclick="closeRecipeBookModal()" class="text-slate-400 hover:text-slate-700 font-black px-2 py-1 text-2xl transition">✕</button>
+      </div>
+      <div id="recipes-list" class="flex flex-col gap-3.5 overflow-y-auto p-1.5 flex-1 pr-2"></div>
+    </div>
+  </div>
+
+  <!-- ================= 彈窗 9.5: 五大修煉關卡地圖 ================= -->
+  <div id="modal-stages" class="fixed inset-0 z-[70] bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 hidden">
+    <div class="w-full max-w-2xl md:max-w-3xl bg-white border-4 border-amber-400 rounded-3xl p-5 sm:p-7 shadow-2xl flex flex-col max-h-[88vh] animate-jelly">
+      <!-- 標題欄 -->
+      <div class="flex justify-between items-center border-b border-amber-200 pb-3 mb-3">
+        <div class="flex items-center gap-3">
+          <span class="text-3xl md:text-4xl">🗺️</span>
+          <div>
+            <h3 class="font-black text-lg sm:text-xl md:text-2xl text-amber-950 flex items-center gap-2">
+              中華小廚神・五大修煉關卡
+            </h3>
+            <div class="text-xs sm:text-sm md:text-base text-amber-700 font-bold">
+              挑戰五大飲食修行關卡，解鎖全套特級養生料理！
+            </div>
+          </div>
+        </div>
+        <button onclick="closeStagesModal()" class="text-slate-400 hover:text-slate-700 text-2xl font-black px-2 py-1 transition cursor-pointer">✕</button>
+      </div>
+
+      <!-- 關卡清單區域 -->
+      <div id="stages-list" class="flex flex-col gap-3.5 overflow-y-auto p-1.5 flex-1 pr-2">
+        <!-- JS 動態生成 5 關進度卡片 -->
+      </div>
+
+      <!-- 底部關閉按鈕 -->
+      <div class="pt-3.5 border-t border-amber-200 mt-3 flex justify-between items-center">
+        <span class="text-xs sm:text-sm text-slate-500 font-bold">💡 收集齊全該關食材，即可在起點廚房大火翻炒過關！</span>
+        <button onclick="closeStagesModal()" class="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 text-white font-black px-6 py-2.5 sm:py-3 rounded-2xl shadow-pop text-sm md:text-base transition active:scale-95 cursor-pointer">
+          返回棋盤 🎲
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 彈窗 10: 答對題目複習筆記 (點擊星星觸發) ================= -->
+  <div id="modal-stars-review" class="fixed inset-0 z-[70] bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 hidden">
+    <div class="w-full max-w-3xl lg:max-w-4xl bg-white border-4 border-amber-400 rounded-3xl p-5 sm:p-7 shadow-2xl flex flex-col max-h-[90vh] animate-jelly">
+      
+      <!-- 標題欄 -->
+      <div class="flex justify-between items-center border-b border-amber-200 pb-3 mb-3">
+        <div class="flex items-center gap-3">
+          <span class="text-3xl md:text-4xl">⭐</span>
+          <div>
+            <h3 class="font-black text-lg sm:text-xl md:text-2xl text-amber-950 flex items-center gap-2">
+              廚神修煉筆記・答對題庫複習
+            </h3>
+            <div class="text-xs sm:text-sm md:text-base text-amber-700 font-bold">
+              已累積答對 <span id="review-stars-count" class="text-emerald-700 font-black text-base md:text-lg">0</span> 題營養題（隨時溫習六大類飲食觀念）
+            </div>
+          </div>
+        </div>
+        <button onclick="closeAnsweredReviewModal()" class="text-slate-400 hover:text-slate-700 text-2xl font-black px-2 py-1 transition">✕</button>
+      </div>
+
+      <!-- 複習題目清單區域 (滾動) -->
+      <div id="review-questions-list" class="flex flex-col gap-3.5 overflow-y-auto p-1 flex-1 pr-2">
+        <!-- JS 動態生成題目複習卡 -->
+      </div>
+
+      <!-- 底部關閉按鈕 -->
+      <div class="pt-3.5 border-t border-amber-200 mt-3 flex justify-between items-center">
+        <span class="text-xs sm:text-sm text-slate-500 font-bold">💡 每次答對的題目都會自動收錄在這邊！</span>
+        <button onclick="closeAnsweredReviewModal()" class="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 text-white font-black px-6 py-3 rounded-2xl shadow-pop text-sm md:text-base transition active:scale-95">
+          完成複習，繼續挑戰 🎲
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= 彈窗 10.5: 榮譽頒獎（獎狀＆特級廚師證・單張精簡版） ================= -->
+  <div id="modal-certificate" class="fixed inset-0 z-[75] bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 hidden select-none">
+    <div class="w-full max-w-xl bg-gradient-to-b from-amber-50 via-white to-orange-50 border-4 border-amber-400 rounded-3xl p-5 sm:p-7 shadow-2xl flex flex-col items-center text-center animate-jelly max-h-[92vh] overflow-y-auto relative">
+      
+      <!-- 金色外框裝飾花紋 -->
+      <div class="absolute inset-2 border-2 border-dashed border-amber-300 rounded-2xl pointer-events-none"></div>
+
+      <!-- 頂部徽章與標題 -->
+      <div class="relative z-10">
+        <div class="inline-flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-3.5 py-1 rounded-full text-xs sm:text-sm font-black shadow-xs mb-1.5">
+          <span>🏆</span>
+          <span>中華小廚神 榮譽結業證書</span>
+        </div>
+        <h3 class="font-black text-xl sm:text-2xl md:text-3xl text-amber-950">
+          特級健康小廚神 獎狀
+        </h3>
+      </div>
+
+      <!-- 受獎主角頭像與姓名 -->
+      <div class="relative z-10 flex items-center gap-3 my-3 bg-white/90 px-4 py-2.5 rounded-2xl border border-amber-300 shadow-2xs">
+        <div id="cert-char-avatar" class="w-14 h-14 sm:w-16 sm:h-16 bg-amber-100 rounded-2xl p-1 border-2 border-amber-400 shadow-xs flex-shrink-0">
+          <!-- 小杰頭像 SVG -->
+        </div>
+        <div class="text-left">
+          <div class="text-xs text-slate-500 font-bold">持證受獎人：</div>
+          <div class="text-base sm:text-lg font-black text-amber-950 flex items-center gap-1.5">
+            <span>健康小廚神（小杰）</span>
+            <span class="bg-amber-100 text-amber-900 text-xs px-2 py-0.5 rounded-full font-black border border-amber-300">特級主廚</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 簡單明瞭正文 -->
+      <p class="relative z-10 text-xs sm:text-sm md:text-base text-slate-800 font-bold leading-relaxed bg-white/80 p-3 sm:p-4 rounded-2xl border border-amber-200 shadow-2xs max-w-md">
+        恭喜您成功通關五大營養試煉！融會貫通六大類飲食口訣，正式獲頒【特級廚神】榮譽執照與合格獎狀！
+      </p>
+
+      <!-- 核心成績標籤 (時間與題數) -->
+      <div class="relative z-10 w-full flex flex-col items-center gap-2 my-3">
+        <!-- 闖關時間與評語 (20分鐘基準) -->
+        <div id="cert-time-badge" class="bg-emerald-100 text-emerald-950 border border-emerald-300 px-3.5 py-1.5 rounded-2xl text-xs sm:text-sm font-black shadow-2xs inline-flex items-center gap-1.5 flex-wrap justify-center">
+          <span>⏱️</span>
+          <span id="cert-time-text">只花了 14分25秒（20分鐘內神速達標！🎉）</span>
+        </div>
+
+        <div class="flex items-center justify-center gap-2 flex-wrap">
+          <span id="cert-stars-badge" class="bg-amber-100 text-amber-950 border border-amber-300 px-3 py-1 rounded-xl text-xs font-black shadow-2xs">
+            ⭐ 累積答對 20 題營養試煉
+          </span>
+          <span class="bg-blue-100 text-blue-950 border border-blue-300 px-3 py-1 rounded-xl text-xs font-black shadow-2xs">
+            🏅 專業資格：特級認證合格 ✔
+          </span>
+        </div>
+      </div>
+
+      <!-- 落款與大紅印章 -->
+      <div class="relative z-10 w-full pt-2.5 border-t border-amber-200 flex items-center justify-between px-2 text-left mt-1">
+        <div>
+          <div class="text-[11px] sm:text-xs text-slate-500 font-bold">頒發單位：陽泉酒家 評審委員會</div>
+          <div class="text-xs sm:text-sm text-amber-950 font-black mt-0.5">主考長老：及第師父 ‧ 嘟嘟 敬頒</div>
+        </div>
+        <!-- 大紅印章 -->
+        <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-xl border-2 border-rose-600 bg-rose-50/90 text-rose-700 font-black flex flex-col items-center justify-center text-[9px] sm:text-[10px] leading-none transform rotate-[-8deg] shadow-xs select-none">
+          <span>特級廚神</span>
+          <span class="text-xs font-black my-0.5">💮</span>
+          <span>檢定合格</span>
+        </div>
+      </div>
+
+      <!-- 底部控制按鈕 -->
+      <div class="relative z-10 mt-4 pt-3 border-t border-amber-200 flex justify-between items-center w-full gap-2">
+        <button onclick="window.print()" class="bg-white hover:bg-amber-50 border-2 border-amber-300 text-amber-950 font-black px-4 sm:px-5 py-2.5 rounded-2xl text-xs sm:text-sm shadow-sm transition active:scale-95 flex items-center gap-1.5 cursor-pointer">
+          <span>🖨️</span>
+          <span>列印獎狀</span>
+        </button>
+        <button onclick="closeCertificateModal()" class="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 text-white font-black px-6 sm:px-8 py-2.5 sm:py-3 rounded-2xl text-xs sm:text-sm md:text-base shadow-pop transition active:scale-95 cursor-pointer">
+          返回盛宴 🍽️
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= 彈窗 11: 終極特級大團圓盛宴 (拖曳美食投餵、三位角色、右上角不干擾讚美氣泡、大圖大字) ================= -->
+  <div id="modal-ending-feast" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 hidden select-none">
+    <div class="w-full max-w-4xl lg:max-w-5xl bg-gradient-to-b from-amber-50 via-white to-orange-50 border-4 border-amber-400 rounded-3xl p-4 sm:p-6 md:p-8 shadow-2xl flex flex-col items-center text-center animate-jelly max-h-[96vh] overflow-y-auto relative">
+      
+      <!-- 頂部標題與滿足度條 -->
+      <div class="w-full flex items-center justify-between gap-3 mb-3 pb-2 border-b border-amber-200 flex-wrap">
+        <div class="flex items-center gap-2.5 text-left">
+          <span class="text-3xl">👑</span>
+          <div>
+            <h3 class="font-black text-base sm:text-lg md:text-xl text-amber-950 leading-tight">
+              陽泉酒家・特級盛宴大圓桌
+            </h3>
+            <div class="text-xs sm:text-sm text-amber-700 font-bold mt-0.5">
+              💡 抓住下方美食拖曳到角色身上品嚐，或點擊投餵！
+            </div>
+          </div>
+        </div>
+
+        <!-- 美味滿足度膠囊 -->
+        <div class="bg-amber-100/90 border border-amber-300 rounded-2xl px-4 py-1.5 flex items-center gap-2.5 shadow-xs">
+          <span class="text-xl">😋</span>
+          <div class="text-left">
+            <div id="feast-satisfaction-count" class="text-xs sm:text-sm md:text-base font-black text-amber-950">已品嚐 0 / 5 道料理</div>
+            <div class="w-32 sm:w-44 bg-white rounded-full h-3 overflow-hidden border border-amber-300 mt-0.5">
+              <div id="feast-satisfaction-bar" class="bg-gradient-to-r from-amber-400 to-orange-500 h-full rounded-full transition-all duration-300 w-0"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 上方：三位劇情角色舞台 (嘟嘟、小杰、及第師父)，每個角色右上角均有獨立讚美氣泡 (pointer-events-none) -->
+      <div class="w-full grid grid-cols-3 gap-2.5 sm:gap-4 my-2.5 relative">
+        
+        <!-- 角色 1: 嘟嘟 -->
+        <div id="char-target-dudu" 
+             ondragover="handleFeastDragOver(event)" 
+             ondragenter="handleFeastDragEnter(event, 'dudu')" 
+             ondragleave="handleFeastDragLeave(event, 'dudu')" 
+             ondrop="handleFeastDrop(event, 'dudu')" 
+             onclick="handleFeastCharClick('dudu')"
+             class="char-drop-target relative bg-gradient-to-b from-rose-50 to-white border-2 border-rose-300 rounded-3xl p-2.5 sm:p-4 flex flex-col items-center justify-between shadow-sm cursor-pointer group transition-all">
+          
+          <!-- 右上角讚美氣泡 (pointer-events-none 絕不影響玩家繼續拖移) -->
+          <div id="feast-praise-dudu" class="absolute -top-4 -right-1 sm:-top-5 sm:-right-3 z-30 pointer-events-none max-w-[130px] sm:max-w-[200px] md:max-w-[260px] bg-white border-2 border-rose-400 rounded-2xl p-2 sm:p-2.5 shadow-xl hidden">
+            <div class="text-[10px] sm:text-xs text-rose-500 font-black flex items-center gap-1">
+              <span>💖</span>
+              <span>嘟嘟笑著說：</span>
+            </div>
+            <div id="feast-praise-text-dudu" class="text-xs sm:text-sm md:text-base font-black text-rose-950 leading-tight mt-0.5 sm:mt-1">
+              太好吃了！
+            </div>
+          </div>
+
+          <!-- 角色頭像 -->
+          <div id="feast-char-dudu" class="w-16 h-16 sm:w-22 sm:h-22 md:w-28 md:h-28 rounded-2xl p-1 bg-white border-2 border-rose-300 shadow-xs transition transform group-hover:scale-105">
+            <!-- SVG -->
+          </div>
+          
+          <div class="mt-1 sm:mt-1.5">
+            <span class="text-xs sm:text-base font-black text-rose-950 bg-rose-100/90 px-2.5 sm:px-3 py-0.5 rounded-full border border-rose-200">嘟嘟</span>
+            <div id="feast-count-dudu" class="text-[10px] sm:text-xs md:text-sm text-slate-500 font-bold mt-0.5 sm:mt-1">已品嚐 0 次</div>
+          </div>
+
+          <div class="mt-1 text-[10px] sm:text-xs md:text-sm text-rose-700 font-bold bg-white/80 px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-xl border border-rose-200 w-full truncate">
+            拖曳至此投餵 🍴
+          </div>
+        </div>
+
+        <!-- 角色 2: 小杰 -->
+        <div id="char-target-xiaojie" 
+             ondragover="handleFeastDragOver(event)" 
+             ondragenter="handleFeastDragEnter(event, 'xiaojie')" 
+             ondragleave="handleFeastDragLeave(event, 'xiaojie')" 
+             ondrop="handleFeastDrop(event, 'xiaojie')" 
+             onclick="handleFeastCharClick('xiaojie')"
+             class="char-drop-target relative bg-gradient-to-b from-amber-50 to-white border-2 border-amber-400 rounded-3xl p-2 sm:p-4 flex flex-col items-center justify-between shadow-sm cursor-pointer group transition-all">
+          
+          <!-- 右上角讚美氣泡 (pointer-events-none 絕不影響玩家繼續拖移) -->
+          <div id="feast-praise-xiaojie" class="absolute -top-4 -right-1 sm:-top-5 sm:-right-3 z-30 pointer-events-none max-w-[130px] sm:max-w-[200px] md:max-w-[260px] bg-white border-2 border-amber-400 rounded-2xl p-2 sm:p-2.5 shadow-xl hidden">
+            <div class="text-[10px] sm:text-xs text-amber-600 font-black flex items-center gap-1">
+              <span>🔥</span>
+              <span>小杰大讚：</span>
+            </div>
+            <div id="feast-praise-text-xiaojie" class="text-xs sm:text-sm md:text-base font-black text-amber-950 leading-tight mt-0.5 sm:mt-1">
+              美味元氣滿滿！
+            </div>
+          </div>
+
+          <!-- 角色頭像 -->
+          <div id="feast-char-xiaojie" class="w-16 h-16 sm:w-22 sm:h-22 md:w-28 md:h-28 rounded-2xl p-1 bg-white border-2 border-amber-400 shadow-xs transition transform group-hover:scale-105">
+            <!-- SVG -->
+          </div>
+          
+          <div class="mt-1 sm:mt-1.5">
+            <span class="text-xs sm:text-base font-black text-amber-950 bg-amber-100/90 px-2.5 sm:px-3 py-0.5 rounded-full border border-amber-300">小杰</span>
+            <div id="feast-count-xiaojie" class="text-[10px] sm:text-xs md:text-sm text-slate-500 font-bold mt-0.5 sm:mt-1">已品嚐 0 次</div>
+          </div>
+
+          <div class="mt-1 text-[10px] sm:text-xs md:text-sm text-amber-800 font-bold bg-white/80 px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-xl border border-amber-200 w-full truncate">
+            拖曳至此投餵 🍴
+          </div>
+        </div>
+
+        <!-- 角色 3: 及第師父 -->
+        <div id="char-target-masterJidi" 
+             ondragover="handleFeastDragOver(event)" 
+             ondragenter="handleFeastDragEnter(event, 'masterJidi')" 
+             ondragleave="handleFeastDragLeave(event, 'masterJidi')" 
+             ondrop="handleFeastDrop(event, 'masterJidi')" 
+             onclick="handleFeastCharClick('masterJidi')"
+             class="char-drop-target relative bg-gradient-to-b from-blue-50 to-white border-2 border-blue-400 rounded-3xl p-2 sm:p-4 flex flex-col items-center justify-between shadow-sm cursor-pointer group transition-all">
+          
+          <!-- 右上角讚美氣泡 (pointer-events-none 絕不影響玩家繼續拖移) -->
+          <div id="feast-praise-masterJidi" class="absolute -top-4 -right-1 sm:-top-5 sm:-right-3 z-30 pointer-events-none max-w-[130px] sm:max-w-[200px] md:max-w-[260px] bg-white border-2 border-blue-400 rounded-2xl p-2 sm:p-2.5 shadow-xl hidden">
+            <div class="text-[10px] sm:text-xs text-blue-600 font-black flex items-center gap-1">
+              <span>🥢</span>
+              <span>及第師父點頭：</span>
+            </div>
+            <div id="feast-praise-text-masterJidi" class="text-xs sm:text-sm md:text-base font-black text-blue-950 leading-tight mt-0.5 sm:mt-1">
+              深得料理精髓！
+            </div>
+          </div>
+
+          <!-- 角色頭像 -->
+          <div id="feast-char-masterJidi" class="w-16 h-16 sm:w-22 sm:h-22 md:w-28 md:h-28 rounded-2xl p-1 bg-white border-2 border-blue-300 shadow-xs transition transform group-hover:scale-105">
+            <!-- SVG -->
+          </div>
+          
+          <div class="mt-1.5">
+            <span class="text-sm sm:text-base font-black text-blue-950 bg-blue-100/90 px-3 py-0.5 rounded-full border border-blue-300">及第師父</span>
+            <div id="feast-count-masterJidi" class="text-xs sm:text-sm text-slate-500 font-bold mt-1">已品嚐 0 次</div>
+          </div>
+
+          <div class="mt-1 text-xs sm:text-sm text-blue-800 font-bold bg-white/80 px-2.5 py-1 rounded-xl border border-blue-200 w-full truncate">
+            拖曳至此投餵 🍴
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 飄出美味心心粒子容器 -->
+      <div id="feast-floating-particles" class="absolute inset-0 pointer-events-none overflow-hidden z-20"></div>
+
+      <!-- 下方：美食排成一排 (橫向一排 5 道特級料理) -->
+      <div class="w-full mt-3 pt-2.5 border-t border-amber-200">
+        <div class="flex items-center justify-between px-1 mb-2">
+          <span class="text-xs sm:text-sm md:text-base font-black text-amber-950 flex items-center gap-1.5">
+            <span>🍽️</span>
+            <span>特級料理列（拖曳至上方角色，或點擊投餵）：</span>
+          </span>
+          <span id="feast-drag-hint" class="text-xs sm:text-sm text-orange-700 font-bold bg-amber-100 px-3 py-1 rounded-full">
+            👆 抓住美食往上拖！
+          </span>
+        </div>
+
+        <!-- 橫向一排 5 道料理 (網格 5 欄) -->
+        <div id="feast-dishes-row" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5 p-1">
+          <!-- 5 道料理動態生成 -->
+        </div>
+      </div>
+
+      <!-- 底部操作按鈕列 (左邊：題庫複習、再次挑戰；右邊：頒獎) -->
+      <div class="w-full flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mt-3 pt-2.5 border-t border-amber-200">
+        <!-- 左邊：題庫複習 ＆ 再次挑戰 -->
+        <div class="flex items-center gap-2.5 flex-1 sm:flex-initial">
+          <button onclick="openAnsweredReviewModal();" class="flex-1 sm:flex-initial bg-emerald-500 hover:bg-emerald-600 text-white font-black py-2.5 sm:py-3 px-4 sm:px-5 rounded-2xl text-xs sm:text-sm md:text-base shadow-pop transition active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer">
+            <span class="text-base sm:text-lg">⭐</span>
+            <span>題庫複習</span>
+          </button>
+          <button onclick="handleResetGame();" class="flex-1 sm:flex-initial bg-slate-100 hover:bg-slate-200 border-2 border-slate-300 text-slate-700 font-black py-2.5 sm:py-3 px-4 sm:px-5 rounded-2xl text-xs sm:text-sm md:text-base shadow-sm transition active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer">
+            <span class="text-base sm:text-lg">🔄</span>
+            <span>再次挑戰</span>
+          </button>
+        </div>
+
+        <!-- 右邊：頒獎 (頒發獎狀及廚師證) -->
+        <div class="flex items-center">
+          <button onclick="openCertificateModal();" class="w-full sm:w-auto bg-gradient-to-r from-amber-500 via-yellow-400 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-amber-950 font-black py-2.5 sm:py-3.5 px-6 sm:px-8 rounded-2xl text-sm sm:text-base md:text-lg shadow-pop transition active:scale-95 flex items-center justify-center gap-2 cursor-pointer border-2 border-amber-200 ring-2 ring-amber-300/60 animate-pulse">
+            <span class="text-xl sm:text-2xl">🏅</span>
+            <span>頒獎（獎狀＆廚師證）</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 引用腳本檔案 -->
+  <script src="assets.js"></script>
+  <script src="game.js"></script>
+  <script>
+    // === UI 主控制器 (中華小廚神大富翁、情境多頁對話框、20題題目系統) ===
+    let isRolling = false;
+    let pendingChanceAction = null;
+    let currentFatePenalty = null;
+    let currentStoryKey = 'intro';
+    let currentStoryIndex = 0;
+    let currentActiveQuiz = null;
+    let isInEndingFeast = false;
+    let feastDishesFed = new Set();
+    let feastFedCounts = { dudu: 0, xiaojie: 0, masterJidi: 0 };
+    let draggedFeastDishId = null;
+    let selectedFeastDishId = null;
+    let praiseTimeouts = { dudu: null, xiaojie: null, masterJidi: null };
+    let gameTimerInterval = null;
+
+    // 盛宴 5 大特級料理（對應 5 大修行關卡食譜）
+    const FeastDishes = [
+      {
+        id: 'grain_rice',
+        name: '五彩元氣全穀炊飯',
+        tag: '全穀雜糧類',
+        slogan: '未精製全穀高纖飽滿',
+        icon: '🌾'
+      },
+      {
+        id: 'bento',
+        name: '彩虹晨光活力便當',
+        tag: '乳品＋水果＋蛋白質',
+        slogan: '每天早晚一杯奶・每餐水果拳頭大',
+        icon: '🍱'
+      },
+      {
+        id: 'tofu_pot',
+        name: '特級元氣午餐盛盤',
+        tag: '豆魚蛋肉＋深綠蔬菜',
+        slogan: '豆魚蛋肉一掌心・飯跟蔬菜一樣多',
+        icon: '🍗'
+      },
+      {
+        id: 'yogurt_bowl',
+        name: '繽紛果香堅果優格露',
+        tag: '堅果種子＋低脂乳品',
+        slogan: '堅果種子一茶匙・無負擔好點心',
+        icon: '🥣'
+      },
+      {
+        id: 'grand_feast',
+        name: '特級全席・七彩元氣盛宴',
+        tag: '六大類食物大滿貫',
+        slogan: '六大類食物餐餐均衡大圓滿',
+        icon: '👑'
+      }
+    ];
+
+    // 角色專屬非重複讚美詞庫 (每個角色 12 句以上，循環洗牌播放)
+    const DuduPraises = [
+      "哇！(嚼嚼嚼😋) 也太香了吧～好吃好吃！",
+      "(大口咬下✨) 天然甜味在嘴裡爆開！健康又美味！",
+      "(眼睛發亮😍) 滿滿的膳食纖維，吃起來好有飽足感！",
+      "(幸福捧臉🌸) 咕嚕咕嚕～鮮甜順口，好喝又高鈣！",
+      "(喀滋喀滋🌰) 香脆爽口～好油無負擔，特級點心！",
+      "(開心轉圈💃) 甜而不膩！一口接一口完全停不下來！",
+      "(嚼嚼～😋) 蔬菜脆嫩多汁，這口感真的太神啦！",
+      "(摸肚子🥰) 吃得好飽好滿足，活力全部補滿啦！",
+      "(滿足微笑✨) 嘟嘟給這道菜一百顆星！太幸福啦！",
+      "(腮幫子鼓鼓🤤) 唔唔唔～層次豐富，每一口都是驚喜！",
+      "(雙眼冒心心💖) 天然的原汁甘甜，完全不需要加糖！",
+      "(豎起大拇指👍) 太厲害了小杰！這道菜真是人間極品！"
+    ];
+
+    const XiaojiePraises = [
+      "(大快朵頤🔥) 太美味了！滿滿的優質能量在燃燒！",
+      "(眼神堅定💪) 口訣『飯跟蔬菜一樣多』！體力瞬間爆表！",
+      "(大口咬定🍖) 肉質鮮嫩多汁，剛好自己一個手掌心！",
+      "(精神百倍⚡) 未精製全穀保留麩皮胚芽，越嚼越香！",
+      "(豪邁擦嘴😆) 讚啦！優質蛋白質與好油，元氣大爆發！",
+      "(熱血沸騰🔥) 這就是我們一起修煉出的特級料理魂！",
+      "(嚼嚼嚼😋) 六大類食物全員到齊的感覺實在太過癮了！",
+      "(開朗大笑😄) 哈哈！這滋味連吃三天三夜都不會膩！",
+      "(讚嘆不已✨) 色香味俱全，連靈魂都被這道菜治癒了！",
+      "(握拳振奮✊) 健康又有飽足感，這才是真正的頂級美味！",
+      "(大口扒飯🍚) 蔬菜鮮脆、米飯甘甜，黃金比例大滿足！",
+      "(自豪燦笑🌟) 我們的特級廚藝，把食材優點發揮到極致！"
+    ];
+
+    const MasterJidiPraises = [
+      "(撫鬚微點頭🥢) 嗯！火候拿捏精準，深得料理之道！",
+      "(眼神讚許✨) 陰陽調和、六大類均衡，此乃上乘養生之作！",
+      "(細細品嚐😌) 口感層次分明，未精製食材的甘純盡在其中。",
+      "(滿意微笑🍵) 懂得用天然原味征服味蕾，你已領悟廚神精髓！",
+      "(擊節讚賞👏) 菜比水果多、早晚一杯奶，口訣在菜中融會貫通！",
+      "(點頭肯定🌟) 蛋白質一掌心、油脂堅果一茶匙，份量恰到好處。",
+      "(長者欣慰😊) 難得！能把健康飲食做得如此引人入勝。",
+      "(撫鬚沉吟🥢) 這道菜入腹溫潤，能補脾胃、長力氣，甚好！",
+      "(由衷感佩🏆) 料理不只悅目，更能滋養身心，不負特級之名！",
+      "(溫和讚許✨) 每一口都能品嚐到你對食材與食客的用心。",
+      "(點頭讚道👍) 鮮而不膩、香而不燥，均衡之道的至高境界！",
+      "(撫鬚長笑😄) 哈哈！青出於藍而勝於藍，老夫由衷欣慰！"
+    ];
+
+    const praiseState = {
+      dudu: { pool: [...DuduPraises], idx: 0 },
+      xiaojie: { pool: [...XiaojiePraises], idx: 0 },
+      masterJidi: { pool: [...MasterJidiPraises], idx: 0 }
+    };
+
+    function getCharacterPraise(charKey) {
+      const state = praiseState[charKey];
+      if (!state) return '好吃好吃！健康美味！';
+      if (state.idx >= state.pool.length) {
+        // 洗牌重新開始，保證不重複
+        for (let i = state.pool.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [state.pool[i], state.pool[j]] = [state.pool[j], state.pool[i]];
+        }
+        state.idx = 0;
+      }
+      const line = state.pool[state.idx];
+      state.idx++;
+      return line;
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      // 載入主角小杰頭像
+      if (window.StoryCharacters && window.StoryCharacters.xiaojie) {
+        document.getElementById('nav-chef-avatar').innerHTML = StoryCharacters.xiaojie;
+      } else if (window.CharacterAssets) {
+        document.getElementById('nav-chef-avatar').innerHTML = CharacterAssets.chefBobo;
+      }
+      
+      updateUI();
+      startGameTimer();
+
+      // 若遊戲已通關第 5 關全滿貫，直接呈現特級大團圓盛宴，不可回棋盤除非重置
+      if (gameState.isStageCompleted(5)) {
+        setTimeout(() => {
+          openEndingFeastModal();
+        }, 300);
+        return;
+      }
+
+      // 初次開啟遊戲時，自動展示開場多頁劇情對話
+      if (!gameState.state.hasSeenIntro) {
+        setTimeout(() => {
+          openStoryDialogue('intro');
+          gameState.state.hasSeenIntro = true;
+          gameState.save();
+        }, 500);
+      } else {
+        // 若已看過開場，但當前關卡行前劇情尚未閱讀，自動跳出對話引導
+        const curConfig = RoundConfigs[gameState.state.currentRound || 1];
+        if (curConfig && !gameState.state[`hasSeen_${curConfig.storyKey}`]) {
+          setTimeout(() => {
+            openStoryDialogue(curConfig.storyKey);
+          }, 500);
+        }
+      }
+    });
+
+    // 重新回棋盤首頁
+    function resetToBoard() {
+      try { sounds.playClick(); } catch(e){}
+      updateUI();
+    }
+
+    // 更新界面狀態
+    function updateUI() {
+      const curRound = gameState.state.currentRound || 1;
+      const rConfig = RoundConfigs[curRound];
+      const activeRecipe = gameState.getActiveRecipe(curRound);
+      const isUnlocked = activeRecipe ? gameState.state.unlockedRecipes.includes(activeRecipe.id) : false;
+      const targetDish = (activeRecipe && DishAssets[activeRecipe.id]) || DishAssets.omurice;
+
+      // 頂部
+      document.getElementById('round-badge').innerText = rConfig.name;
+      document.getElementById('current-slogan-text').innerText = rConfig.slogan;
+      const starCount = (gameState.state.answeredQuestions && gameState.state.answeredQuestions.length) || gameState.state.stars || 0;
+      document.getElementById('header-stars').innerText = starCount;
+      const totalCount = Object.values(gameState.state.inventory).reduce((a, b) => a + b, 0);
+      document.getElementById('header-pantry-count').innerText = totalCount;
+      const shieldCountEl = document.getElementById('header-shield-count');
+      if (shieldCountEl) shieldCountEl.innerText = gameState.state.chefShield || 0;
+
+      // 中央食譜卡 (未解鎖時顯示問號遮罩，若天機已揭秘則提前預覽！)
+      const recipeIndex = rConfig.recipes.findIndex(r => r.id === activeRecipe.id);
+      const totalRecipesInRound = rConfig.recipes.length;
+      const recipeStepText = totalRecipesInRound > 1 ? `（食譜 ${recipeIndex + 1}/${totalRecipesInRound}）` : '';
+      const isRevealed = gameState.isRecipeRevealed(activeRecipe.id);
+      
+      if (isUnlocked) {
+        document.getElementById('center-dish-svg').innerHTML = targetDish.svg;
+        document.getElementById('center-dish-name').innerText = `${activeRecipe.name} ${recipeStepText} ✨`;
+        const sloganSub = document.getElementById('center-dish-slogan');
+        if (sloganSub) sloganSub.innerText = activeRecipe.desc;
+      } else if (isRevealed) {
+        document.getElementById('center-dish-svg').innerHTML = targetDish.svg;
+        document.getElementById('center-dish-name').innerText = `🔮【天機揭秘】${activeRecipe.name} ${recipeStepText}`;
+        const sloganSub = document.getElementById('center-dish-slogan');
+        if (sloganSub) sloganSub.innerText = `💡 食譜已提前揭曉！快答題集齊食材回起點大開火！`;
+      } else {
+        document.getElementById('center-dish-svg').innerHTML = DishAssets.mystery_dish;
+        document.getElementById('center-dish-name').innerText = `？？？ 神秘料理 ${recipeStepText}`;
+        const sloganSub = document.getElementById('center-dish-slogan');
+        if (sloganSub) sloganSub.innerText = `收集指定食材回起點大開火揭曉！`;
+      }
+
+      // 檢查收集進度小勾選
+      const ingStatusBox = document.getElementById('center-dish-ing-status');
+      const allReady = activeRecipe.requiredFoods.every(fId => (gameState.state.inventory[fId] || 0) > 0);
+      ingStatusBox.innerHTML = activeRecipe.requiredFoods.map(fId => {
+        const has = (gameState.state.inventory[fId] || 0) > 0;
+        const food = FoodAssets[fId] || { name: fId, svg: '🥗' };
+        return `
+          <div class="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 rounded-xl sm:rounded-2xl p-0.5 sm:p-1 border-2 ${has ? 'border-emerald-500 bg-emerald-50 shadow-xs' : 'border-slate-300 opacity-40'} relative" title="${food.name}">
+            ${food.svg}
+            ${has ? '<span class="absolute -top-1 -right-1 bg-emerald-500 text-white rounded-full text-[9px] sm:text-xs px-1 sm:px-1.5 py-0.2 font-black shadow-xs">✓</span>' : ''}
+          </div>
+        `;
+      }).join('');
+
+      // 開火按鈕
+      const cookBtn = document.getElementById('cook-now-btn');
+      const roundLabel = document.getElementById('round-status-label');
+      if (allReady) {
+        cookBtn.disabled = false;
+        cookBtn.classList.add('animate-bounce');
+        roundLabel.innerText = `✨ 食材集齊！可至起點開火做【${activeRecipe.name}】！`;
+      } else {
+        cookBtn.disabled = true;
+        cookBtn.classList.remove('animate-bounce');
+        roundLabel.innerText = `集齊 ${activeRecipe.requiredFoods.length} 種食材後回起點開火 🍳`;
+      }
+
+      const stagesModal = document.getElementById('modal-stages');
+      if (stagesModal && !stagesModal.classList.contains('hidden')) {
+        renderStagesMap();
+      }
+
+      renderPawn();
+    }
+
+    // 渲染棋盤上的棋子 (小杰或柴犬主廚)
+    function renderPawn() {
+      for (let i = 0; i < 16; i++) {
+        const box = document.getElementById(`pawn-container-${i}`);
+        if (box) box.innerHTML = '';
+        const tile = document.getElementById(`tile-${i}`);
+        if (tile) tile.classList.remove('active-tile');
+      }
+
+      const pos = gameState.state.boardPosition;
+      const targetBox = document.getElementById(`pawn-container-${pos}`);
+      const targetTile = document.getElementById(`tile-${pos}`);
+      if (targetBox) {
+        const avatarSvg = (window.StoryCharacters && window.StoryCharacters.xiaojie) ? StoryCharacters.xiaojie : CharacterAssets.chefBobo;
+        targetBox.innerHTML = `
+          <div class="w-10 h-10 sm:w-14 sm:h-14 md:w-18 md:h-18 lg:w-22 lg:h-22 relative animate-pawn-hop drop-shadow">
+            ${avatarSvg}
+          </div>
+        `;
+      }
+      if (targetTile) targetTile.classList.add('active-tile');
+    }
+
+    // === 核心操作：擲骰子 ===
+    function handleRollDice() {
+      if (isRolling) return;
+      isRolling = true;
+
+      const diceCube = document.getElementById('dice-cube');
+      const diceNum = document.getElementById('dice-num');
+      const diceTip = document.getElementById('dice-tip');
+
+      diceCube.classList.add('animate-dice-roll');
+      diceTip.innerText = '🎲 命運骰子轉動中...';
+      try { sounds.playDiceRoll(); } catch(e){}
+
+      // 安全防呆機制：確保 3 秒後必定解除鎖定
+      const failsafe = setTimeout(() => {
+        isRolling = false;
+        diceCube.classList.remove('animate-dice-roll');
+      }, 3500);
+
+      const faces = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+      let count = 0;
+      const timer = setInterval(() => {
+        diceNum.innerText = faces[Math.floor(Math.random() * 6)];
+        count++;
+        if (count > 7) {
+          clearInterval(timer);
+          clearTimeout(failsafe);
+
+          const steps = Math.floor(Math.random() * 6) + 1;
+          diceNum.innerText = steps;
+          diceCube.classList.remove('animate-dice-roll');
+          diceTip.innerText = `🚶‍♂️ 擲出了 ${steps} 點！前進中...`;
+          try { sounds.playCorrect(); } catch(e){}
+
+          // 棋子一步一步跳躍前進
+          stepPawn(steps, () => {
+            isRolling = false;
+            diceTip.innerText = '👉 抵達格子！觸發事件！';
+            onLandTile(gameState.state.boardPosition);
+          });
+        }
+      }, 70);
+    }
+
+    // 棋子連續跳動
+    function stepPawn(remaining, callback) {
+      if (remaining <= 0) {
+        callback();
+        return;
+      }
+      setTimeout(() => {
+        let nxt = (gameState.state.boardPosition + 1) % 16;
+        gameState.state.boardPosition = nxt;
+        gameState.save();
+        try { sounds.playPop(); } catch(e){}
+        renderPawn();
+        stepPawn(remaining - 1, callback);
+      }, 200);
+    }
+
+    // 依據規則：禁止手動點擊格子跳躍或偷答題，只有擲骰到達該格才能互動！
+    function handleTileClick(idx) {
+      return;
+    }
+
+    // === 踩中格子事件 (70% 答題、15% 機會、15% 命運) ===
+    function onLandTile(idx) {
+      const tile = MonopolyTiles[idx];
+      if (tile.type === 'start') {
+        try { sounds.playFanfare(); } catch(e){}
+        const curRound = gameState.state.currentRound || 1;
+        const activeRecipe = gameState.getActiveRecipe(curRound);
+        const allReady = activeRecipe ? gameState.hasRecipeIngredients(activeRecipe.id) : false;
+        if (allReady) {
+          openCookingModal();
+        } else {
+          document.getElementById('dice-tip').innerText = activeRecipe 
+            ? `🚩 抵達起點！集齊食材就能製作【${activeRecipe.name}】！` 
+            : '🚩 抵達起點廚房！繼續答題收集食材！';
+        }
+      } else if (tile.type === 'quiz') {
+        // 進入答題區：回答六大類食物問題！
+        openFoodQuizModal();
+      } else if (tile.type === 'chance') {
+        // 進入機會區
+        openChanceModal();
+      } else if (tile.type === 'fate') {
+        // 進入命運區
+        openFateModal();
+      }
+    }
+
+    // ================= 答題區：六大類食物營養問答 (重點：題目必出、解析詳盡) =================
+    function openFoodQuizModal() {
+      try { sounds.playCardFlip(); } catch(e){}
+      
+      const curRound = gameState.state.currentRound || 1;
+      const rConfig = RoundConfigs[curRound];
+      
+      // 從當前關卡中抽選題目（優先抽未答過的）
+      const q = gameState.getNextQuestion(curRound);
+      currentActiveQuiz = q;
+
+      document.getElementById('quiz-stage-tag').innerText = `【${q.stageName}】`;
+      document.getElementById('quiz-category-tag').innerText = `🎯 ${q.categoryTag}`;
+      document.getElementById('quiz-question-title').innerText = `${q.id}. ${q.q}`;
+
+      // 食物大圖示
+      const foodObj = FoodAssets[q.foodId] || FoodAssets.brown_rice;
+      document.getElementById('quiz-food-img').innerHTML = foodObj.svg;
+
+      const optsBox = document.getElementById('quiz-options-container');
+      const resMsg = document.getElementById('quiz-result-msg');
+      const closeBtn = document.getElementById('quiz-close-btn');
+
+      resMsg.classList.add('hidden');
+      closeBtn.classList.add('hidden');
+
+      // 判斷是否為是非題 (tf) 或四選一 (choice)
+      if (q.type === 'tf') {
+        optsBox.innerHTML = `
+          <div class="grid grid-cols-2 gap-3.5">
+            ${q.options.map(opt => `
+              <button onclick="handleAnswerPick('${opt.key}', ${opt.isCorrect})" class="quiz-opt-btn bg-emerald-50 hover:bg-emerald-100 border-2 border-emerald-300 rounded-2xl py-4 sm:py-5 text-lg sm:text-xl md:text-2xl font-black text-emerald-950 transition active:scale-95 shadow-sm flex items-center justify-center gap-3">
+                <span class="text-2xl">${opt.key === 'A' ? '🟢' : '🔴'}</span>
+                <span>${opt.text}</span>
+              </button>
+            `).join('')}
+          </div>
+        `;
+      } else {
+        optsBox.innerHTML = q.options.map(opt => {
+          return `
+            <button onclick="handleAnswerPick('${opt.key}', ${opt.isCorrect})" class="quiz-opt-btn w-full text-left bg-emerald-50 hover:bg-emerald-100 border-2 border-emerald-300 rounded-2xl p-3.5 sm:p-4 text-sm sm:text-base md:text-lg font-black text-emerald-950 transition active:scale-95 shadow-sm flex items-center justify-between gap-3">
+              <span class="flex-1">${opt.text}</span>
+              <span class="text-xs sm:text-sm bg-emerald-200/90 text-emerald-900 px-2.5 py-1 rounded-full font-bold flex-shrink-0">點選</span>
+            </button>
+          `;
+        }).join('');
+      }
+
+      document.getElementById('modal-quiz').classList.remove('hidden');
+    }
+
+    function handleAnswerPick(pickedKey, isCorrect) {
+      const q = currentActiveQuiz;
+      const resMsg = document.getElementById('quiz-result-msg');
+      const closeBtn = document.getElementById('quiz-close-btn');
+      const optsBox = document.getElementById('quiz-options-container');
+      
+      // 禁用所有按鈕防止重複點擊
+      const buttons = optsBox.querySelectorAll('button');
+      buttons.forEach(b => {
+        b.disabled = true;
+        b.classList.remove('hover:bg-emerald-100', 'active:scale-95');
+      });
+
+      if (isCorrect) {
+        try { sounds.playCorrect(); } catch(e){}
+        gameState.addFood(q.foodId, 1);
+        gameState.recordAnswered(q.id);
+
+        const food = FoodAssets[q.foodId] || { name: '健康食材' };
+        resMsg.innerHTML = `
+          <div class="text-emerald-800 font-black text-sm md:text-base flex items-center gap-1.5">
+            <span>🎉 太棒了，答對了！</span>
+            <span class="bg-emerald-200 text-emerald-950 text-xs px-2 py-0.5 rounded-full">獲得【${food.name}】+1 🎁</span>
+          </div>
+          <div class="text-emerald-950 font-bold bg-white/80 p-2.5 rounded-xl border border-emerald-300 mt-1">
+            ${q.shortExplanation}
+          </div>
+          <div class="text-slate-600 text-xs bg-amber-50/80 p-2.5 rounded-xl border border-amber-200 mt-1">
+            💡 <strong>營養小秘訣：</strong>${q.detailedReason}
+          </div>
+        `;
+        resMsg.className = 'w-full p-3.5 bg-emerald-50 border-2 border-emerald-400 rounded-2xl text-xs md:text-sm font-bold text-left space-y-1.5';
+        resMsg.classList.remove('hidden');
+        closeBtn.classList.remove('hidden');
+        closeBtn.innerText = `收下【${food.name}】放入背包 🎒`;
+
+        updateUI();
+      } else {
+        try { sounds.playWrong(); } catch(e){}
+        gameState.recordWrong(q.id);
+        resMsg.innerHTML = `
+          <div class="text-rose-700 font-black text-sm md:text-base flex items-center gap-1.5">
+            <span>✕ 再想一想喔！</span>
+          </div>
+          <div class="text-slate-800 font-bold bg-white/80 p-2.5 rounded-xl border border-amber-300 mt-1">
+            ${q.shortExplanation}
+          </div>
+          <div class="text-slate-600 text-xs bg-amber-50/80 p-2.5 rounded-xl border border-amber-200 mt-1">
+            💡 <strong>營養小秘訣：</strong>${q.detailedReason}
+          </div>
+        `;
+        resMsg.className = 'w-full p-3.5 bg-amber-50 border-2 border-amber-400 rounded-2xl text-xs md:text-sm font-bold text-left space-y-1.5';
+        resMsg.classList.remove('hidden');
+        closeBtn.classList.remove('hidden');
+        closeBtn.innerText = '我知道了，下次加油！';
+      }
+    }
+
+    function closeQuizModal() {
+      document.getElementById('modal-quiz').classList.add('hidden');
+      updateUI();
+      checkAndTriggerCookReminder();
+    }
+
+    // ================= 機會區彈窗 (幸運奇遇見聞劇情，緊扣食譜天機預覽、庇護金牌、絕不跳過答題獲得食材) =================
+    function openChanceModal() {
+      try { sounds.playCardFlip(); } catch(e){}
+      const curRound = gameState.state.currentRound || 1;
+      const stageEvents = (window.ChanceEventsByStage && window.ChanceEventsByStage[curRound]) || window.ChanceEvents;
+      const card = stageEvents[Math.floor(Math.random() * stageEvents.length)];
+
+      document.getElementById('chance-title').innerText = card.title;
+      document.getElementById('chance-speaker').innerText = card.speaker;
+      document.getElementById('chance-story').innerText = card.story;
+
+      const avatarBox = document.getElementById('chance-avatar');
+      if (window.StoryCharacters && window.StoryCharacters[card.avatar]) {
+        avatarBox.innerHTML = window.StoryCharacters[card.avatar];
+      } else {
+        avatarBox.innerHTML = `<span class="text-3xl">${card.icon}</span>`;
+      }
+
+      pendingChanceAction = card.effect;
+      let rewardContent = '';
+
+      if (card.effect === 'sneak_peek') {
+        // 找出尚未揭秘的食譜（優先當前關卡，其次未來關卡）
+        let targetRecipe = null;
+        for (let r = curRound; r <= 5; r++) {
+          const rCfg = RoundConfigs[r];
+          for (const rec of rCfg.recipes) {
+            if (!gameState.isRecipeRevealed(rec.id)) {
+              targetRecipe = rec;
+              break;
+            }
+          }
+          if (targetRecipe) break;
+        }
+        if (!targetRecipe) {
+          for (let r = 1; r <= 5; r++) {
+            const rCfg = RoundConfigs[r];
+            for (const rec of rCfg.recipes) {
+              if (!gameState.isRecipeRevealed(rec.id)) {
+                targetRecipe = rec;
+                break;
+              }
+            }
+            if (targetRecipe) break;
+          }
+        }
+
+        if (targetRecipe) {
+          gameState.revealRecipe(targetRecipe.id);
+          const targetDish = DishAssets[targetRecipe.id] || DishAssets.omurice;
+          try { sounds.playFanfare(); } catch(e){}
+          rewardContent = `
+            <div class="flex flex-col items-center gap-2 p-3 sm:p-4 bg-gradient-to-r from-purple-100 via-pink-50 to-indigo-100 rounded-2xl border-2 border-purple-300 shadow-sm w-full">
+              <div class="text-xs sm:text-sm md:text-base font-black text-purple-950 flex items-center gap-1.5 flex-wrap justify-center">
+                <span>🔮 廚神天機顯現！搶先揭秘特級食譜：</span>
+                <span class="bg-purple-200 text-purple-950 px-2.5 py-0.5 rounded-full text-xs sm:text-sm font-black">【${targetRecipe.name}】</span>
+              </div>
+              <div class="w-16 h-16 sm:w-20 sm:h-20 my-1 p-1 bg-white rounded-2xl border-2 border-purple-400 shadow-xs flex items-center justify-center animate-bounce">
+                ${targetDish.svg}
+              </div>
+              <div class="text-sm sm:text-base font-black text-purple-950 text-center">${targetDish.name}</div>
+              <div class="text-xs sm:text-sm text-slate-700 font-bold text-center">${targetRecipe.desc}</div>
+              <div class="text-xs sm:text-sm text-purple-900 font-bold bg-white/90 px-3 py-1.5 rounded-xl border border-purple-200 mt-1 text-center">
+                ✨ 提示：食譜圖鑑已解鎖預覽！請繼續答題賺取食材，回起點大顯身手！
+              </div>
+            </div>
+          `;
+        } else {
+          // 所有食譜皆已窺探過
+          gameState.state.stars = (gameState.state.stars || 0) + 1;
+          gameState.save();
+          rewardContent = `
+            <div class="p-2 text-center text-xs sm:text-sm font-black text-purple-950">
+              🔮 廚神天機全開！所有食譜已被你看透！獲得額外廚神星星 ⭐ +1！
+            </div>
+          `;
+        }
+      } else if (card.effect === 'shield') {
+        gameState.addChefShield(1);
+        try { sounds.playFanfare(); } catch(e){}
+        rewardContent = `
+          <div class="flex flex-col items-center gap-1 p-2 bg-gradient-to-r from-amber-100 to-yellow-100 rounded-2xl border-2 border-amber-400 shadow-sm w-full">
+            <div class="text-sm font-black text-amber-950 flex items-center gap-1.5">
+              <span class="text-xl">🛡️</span>
+              <span>獲得【廚神庇護金牌】× 1！(現有: ${gameState.state.chefShield} 枚)</span>
+            </div>
+            <div class="text-xs text-amber-900 font-bold text-center">
+              💡 及第師父親授護身金牌，可完美抵擋一次命運考驗的「食材沒收」與「後退」！
+            </div>
+          </div>
+        `;
+      } else if (card.effect === 'bonus_stars') {
+        gameState.state.stars = (gameState.state.stars || 0) + 2;
+        gameState.save();
+        try { sounds.playFanfare(); } catch(e){}
+        rewardContent = `
+          <div class="flex flex-col items-center gap-1 p-2 bg-gradient-to-r from-amber-100 to-emerald-100 rounded-2xl border-2 border-amber-300 shadow-sm w-full">
+            <div class="text-sm font-black text-amber-950 flex items-center gap-1.5">
+              <span class="text-xl">⭐</span>
+              <span>廚藝領悟力大增！獲得額外廚神星星 ⭐ +2！</span>
+            </div>
+            <div class="text-xs text-slate-700 font-bold text-center">
+              牢記營養口訣，廚神修行更上一層樓！
+            </div>
+          </div>
+        `;
+      } else if (card.effect === 'forward_step') {
+        rewardContent = `
+          <div class="flex flex-col items-center gap-1 p-2 bg-gradient-to-r from-purple-100 to-indigo-100 rounded-2xl border-2 border-purple-300 shadow-sm w-full">
+            <div class="text-sm font-black text-purple-950 flex items-center gap-1.5">
+              <span class="text-xl">🚀</span>
+              <span>體態輕盈、健步如飛！額外前進 2 格！</span>
+            </div>
+            <div class="text-xs text-slate-700 font-bold text-center">
+              關閉彈窗後棋子將自動前進 2 格！
+            </div>
+          </div>
+        `;
+      } else if (card.effect === 'teleport_quiz') {
+        rewardContent = `
+          <div class="flex flex-col items-center gap-1 p-2 bg-gradient-to-r from-emerald-100 to-teal-100 rounded-2xl border-2 border-emerald-300 shadow-sm w-full">
+            <div class="text-sm font-black text-emerald-950 flex items-center gap-1.5">
+              <span class="text-xl">🎯</span>
+              <span>嘟嘟帶路！直飛前方最近的「答題試煉格」！</span>
+            </div>
+            <div class="text-xs text-emerald-900 font-bold text-center">
+              關閉彈窗後立刻抵達答題格，挑戰營養問答贏取食材！
+            </div>
+          </div>
+        `;
+      } else {
+        rewardContent = `<div class="font-black text-purple-950">${card.effectText}</div>`;
+      }
+
+      document.getElementById('chance-reward').innerHTML = rewardContent;
+      document.getElementById('modal-chance').classList.remove('hidden');
+      updateUI();
+    }
+
+    function closeChanceModal() {
+      document.getElementById('modal-chance').classList.add('hidden');
+      const action = pendingChanceAction;
+      pendingChanceAction = null;
+
+      if (action === 'forward_step') {
+        // 前進 2 格
+        setTimeout(() => {
+          stepPawn(2, () => {
+            onLandTile(gameState.state.boardPosition);
+          });
+        }, 200);
+      } else if (action === 'teleport_quiz') {
+        // 尋找前方最近的答題格
+        let nextQuizPos = (gameState.state.boardPosition + 1) % 16;
+        while (MonopolyTiles[nextQuizPos].type !== 'quiz') {
+          nextQuizPos = (nextQuizPos + 1) % 16;
+        }
+        gameState.state.boardPosition = nextQuizPos;
+        gameState.save();
+        renderPawn();
+        try { sounds.playFanfare(); } catch(e){}
+        setTimeout(() => {
+          openFoodQuizModal();
+        }, 350);
+      } else {
+        renderPawn();
+        checkAndTriggerCookReminder();
+      }
+    }
+
+    // ================= 命運區彈窗 (健康生活小提醒與支線故事，不收回食材，字數精煉) =================
+    function openFateModal() {
+      const curRound = gameState.state.currentRound || 1;
+      const stageEvents = (window.FateEventsByStage && window.FateEventsByStage[curRound]) || window.FateEvents;
+      const card = stageEvents[Math.floor(Math.random() * stageEvents.length)];
+
+      document.getElementById('fate-title').innerText = card.title;
+      document.getElementById('fate-speaker').innerText = card.speaker;
+      
+      const avatarBox = document.getElementById('fate-avatar');
+      if (window.StoryCharacters && window.StoryCharacters[card.avatar]) {
+        avatarBox.innerHTML = window.StoryCharacters[card.avatar];
+      } else {
+        avatarBox.innerHTML = `<span class="text-3xl">${card.icon}</span>`;
+      }
+
+      // 檢查是否擁有及第師父的【廚神庇護金牌】
+      const hasShield = gameState.hasChefShield();
+      const effectEl = document.getElementById('fate-effect');
+      const storyEl = document.getElementById('fate-story');
+
+      if (hasShield) {
+        // 庇護金牌生效！抵擋後退！
+        gameState.useChefShield();
+        try { sounds.playFanfare(); } catch(e){}
+        currentFatePenalty = null;
+
+        storyEl.innerHTML = `
+          <p class="font-bold text-slate-800">${card.story}</p>
+          <div class="mt-2 p-2 bg-amber-50 rounded-xl border border-amber-300 text-amber-950 font-black text-xs flex items-center gap-1.5 text-left">
+            <span>✨ 叮！及第師父賜予的【廚神庇護金牌】迸發金芒，穩住腳步免退後！</span>
+          </div>
+        `;
+
+        effectEl.innerHTML = `
+          <div class="flex flex-col items-center gap-1 text-center py-1">
+            <div class="text-amber-950 font-black text-xs sm:text-sm flex items-center justify-center gap-1.5">
+              <span class="text-xl">🛡️</span>
+              <span>【廚神庇護金牌 生效！】</span>
+            </div>
+            <div class="text-emerald-800 font-black text-xs bg-emerald-100/90 px-3 py-1 rounded-xl border border-emerald-300">
+              🎉 成功抵擋本次後退！所有食材平安無恙！(剩餘金牌: ${gameState.state.chefShield} 枚)
+            </div>
+            <div class="text-xs sm:text-sm text-amber-900 font-bold mt-1">
+              💡 ${card.tip}
+            </div>
+          </div>
+        `;
+      } else {
+        // 無庇護金牌：溫馨飲食提醒 + 退後 1 格 (絕對不扣食材！)
+        try { sounds.playWrong(); } catch(e){}
+        currentFatePenalty = 'back_1';
+
+        storyEl.innerText = card.story;
+
+        effectEl.innerHTML = `
+          <div class="flex flex-col gap-1 items-center text-center w-full py-1">
+            <div class="text-amber-950 font-black text-xs sm:text-sm flex items-center justify-center gap-1.5">
+              <span>💡 飲食健康小提醒</span>
+            </div>
+            <div class="text-xs text-amber-950 font-bold bg-amber-100/90 p-2.5 rounded-xl border border-amber-300 text-left leading-relaxed">
+              💡 <strong>營養口訣：</strong>${card.tip}
+            </div>
+            <div class="text-xs text-rose-700 font-black mt-1">
+              🚶‍♂️ 稍事歇息，退後 1 格！
+            </div>
+          </div>
+        `;
+      }
+
+      document.getElementById('modal-fate').classList.remove('hidden');
+      updateUI();
+    }
+
+    function closeFateModal() {
+      document.getElementById('modal-fate').classList.add('hidden');
+      if (currentFatePenalty === 'back_2') {
+        gameState.state.boardPosition = (gameState.state.boardPosition - 2 + 16) % 16;
+      } else if (currentFatePenalty === 'back_1') {
+        gameState.state.boardPosition = (gameState.state.boardPosition - 1 + 16) % 16;
+      }
+      currentFatePenalty = null;
+      gameState.save();
+      renderPawn();
+      updateUI();
+    }
+
+    // ================= 廚房做料理 =================
+    function openCookingModal() {
+      const curRound = gameState.state.currentRound || 1;
+      const activeRecipe = gameState.getActiveRecipe(curRound);
+      if (!activeRecipe) return;
+      const dish = DishAssets[activeRecipe.id];
+
+      // 重置開火按鈕狀態，徹底解決卡在「翻炒中」的問題！
+      const stirBtn = document.getElementById('stir-btn');
+      if (stirBtn) {
+        stirBtn.disabled = false;
+        stirBtn.innerText = '🔥 開火翻炒！';
+      }
+
+      document.getElementById('cook-dish-title').innerText = `製作【${activeRecipe.name}】`;
+      document.getElementById('cook-pot-svg').innerHTML = `
+        <svg viewBox="0 0 120 120" class="w-full h-full drop-shadow">
+          <ellipse cx="60" cy="65" rx="50" ry="32" fill="#F59E0B" stroke="#D97706" stroke-width="3"/>
+          <ellipse cx="60" cy="62" rx="44" ry="26" fill="#FEF08A"/>
+          <circle cx="50" cy="60" r="4" fill="#F97316"/>
+          <circle cx="70" cy="62" r="4" fill="#10B981"/>
+        </svg>
+      `;
+
+      // 渲染食材列表
+      const ingsBox = document.getElementById('cook-ingredients-list');
+      ingsBox.innerHTML = activeRecipe.requiredFoods.map(fId => {
+        const food = FoodAssets[fId] || { name: fId, svg: '🥗' };
+        return `
+          <div class="flex flex-col items-center">
+            <div class="w-14 h-14 md:w-16 md:h-16 bg-amber-50 rounded-2xl p-1.5 border-2 border-amber-300 shadow-sm">${food.svg}</div>
+            <span class="text-xs sm:text-sm font-black text-amber-950 mt-1.5">${food.name}</span>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('modal-cook').classList.remove('hidden');
+    }
+
+    function closeCookingModal() {
+      // 關閉時重置按鈕
+      const stirBtn = document.getElementById('stir-btn');
+      if (stirBtn) {
+        stirBtn.disabled = false;
+        stirBtn.innerText = '🔥 開火翻炒！';
+      }
+      document.getElementById('modal-cook').classList.add('hidden');
+    }
+
+    function handleStirPot() {
+      try { sounds.playSizzle(); } catch(e){}
+      const stirBtn = document.getElementById('stir-btn');
+      if (stirBtn) {
+        stirBtn.innerText = '翻炒中...♨️';
+        stirBtn.disabled = true;
+      }
+
+      setTimeout(() => {
+        const curRound = gameState.state.currentRound || 1;
+        const activeRecipe = gameState.getActiveRecipe(curRound);
+        const dish = DishAssets[activeRecipe.id];
+
+        gameState.consumeRecipeIngredients(activeRecipe.id);
+        gameState.state.lastCookReminder = null;
+        gameState.save();
+        closeCookReminderModal();
+
+        try { sounds.playFanfare(); } catch(e){}
+        closeCookingModal();
+
+        // 成功彈窗
+        const isStageCompleted = gameState.isStageCompleted(curRound);
+        document.getElementById('success-dish-icon').innerHTML = dish.svg;
+        document.getElementById('success-dish-name').innerText = dish.name;
+        document.getElementById('success-dish-desc').innerText = activeRecipe.desc;
+
+        const successTip = document.getElementById('success-dish-tip');
+        const advanceBtn = document.getElementById('advance-round-btn');
+
+        if (isStageCompleted) {
+          if (curRound < 5) {
+            if (successTip) successTip.innerText = '⭐ 本關食譜全數解鎖大成功！正式解鎖下一關！';
+            if (advanceBtn) advanceBtn.innerText = '進入下一關劇情 ➔';
+          } else {
+            if (successTip) successTip.innerText = '🎉 恭喜！全部 5 關特級料理全數解鎖大圓滿！';
+            if (advanceBtn) advanceBtn.innerText = '✨ 參加特級大團圓盛宴！ ➔';
+          }
+        } else {
+          if (successTip) successTip.innerText = `✨ 成功解鎖料理【${dish.name}】！繼續答題收集食材製作下一道！`;
+          if (advanceBtn) advanceBtn.innerText = '繼續挑戰本關食譜 ➔';
+        }
+
+        document.getElementById('modal-success').classList.remove('hidden');
+
+        updateUI();
+      }, 700);
+    }
+
+    function advanceToNextRound() {
+      document.getElementById('modal-success').classList.add('hidden');
+      const curRound = gameState.state.currentRound || 1;
+      const isStageCompleted = gameState.isStageCompleted(curRound);
+
+      if (!isStageCompleted) {
+        // 本關還有其他食譜要解鎖 (例如 Stage 1 的第 2 道食譜)
+        updateUI();
+        return;
+      }
+
+      if (curRound < 5) {
+        gameState.state.currentRound++;
+        gameState.state.boardPosition = 0;
+        gameState.save();
+        updateUI();
+        try { sounds.playVictory(); } catch(e){}
+        
+        // 進入下一關前，先閱讀該關對應行前劇情對話
+        const nextConfig = RoundConfigs[gameState.state.currentRound];
+        setTimeout(() => {
+          openStoryDialogue(nextConfig.storyKey);
+        }, 300);
+      } else {
+        // 全部 5 關挑戰通關，展示大團圓盛宴畫面！
+        try { sounds.playVictory(); } catch(e){}
+        openEndingFeastModal();
+      }
+    }
+
+    // ================= 終極大團圓盛宴 (拖曳美食互動投餵角色、說好好吃) =================
+    function openEndingFeastModal() {
+      isInEndingFeast = true;
+      stopGameTimer();
+      try { sounds.playVictory(); } catch(e){}
+
+      // 載入三位角色大頭像
+      const duduEl = document.getElementById('feast-char-dudu');
+      if (duduEl && window.StoryCharacters && window.StoryCharacters.dudu) {
+        duduEl.innerHTML = StoryCharacters.dudu;
+      }
+      const xiaoEl = document.getElementById('feast-char-xiaojie');
+      if (xiaoEl && window.StoryCharacters && window.StoryCharacters.xiaojie) {
+        xiaoEl.innerHTML = StoryCharacters.xiaojie;
+      }
+      const jidiEl = document.getElementById('feast-char-masterJidi');
+      if (jidiEl && window.StoryCharacters && window.StoryCharacters.masterJidi) {
+        jidiEl.innerHTML = StoryCharacters.masterJidi;
+      }
+
+      // 重置或更新三位角色已品嚐計數
+      ['dudu', 'xiaojie', 'masterJidi'].forEach(k => {
+        const countBadge = document.getElementById('feast-count-' + k);
+        if (countBadge) {
+          countBadge.innerText = `已品嚐 ${feastFedCounts[k] || 0} 次`;
+        }
+      });
+
+      // 渲染橫向排列的美食清單列與進度
+      renderFeastDishesRow();
+      updateFeastSatisfaction();
+
+      const starsEl = document.getElementById('ending-stars-count');
+      if (starsEl) starsEl.innerText = `${gameState.state.answeredQuestions.length} 題 ⭐`;
+
+      document.getElementById('modal-ending-feast').classList.remove('hidden');
+    }
+
+    function closeEndingFeastModal() {
+      // 依據使用者需求：開啟特級全席後不能再回到剛剛的遊戲畫面，除非點選再次挑戰！
+      if (!isInEndingFeast) {
+        document.getElementById('modal-ending-feast').classList.add('hidden');
+      }
+    }
+
+    // 拖曳開始
+    function handleFeastDragStart(event, dishId) {
+      draggedFeastDishId = dishId;
+      selectedFeastDishId = dishId;
+      if (event.dataTransfer) {
+        event.dataTransfer.setData('text/plain', dishId);
+        event.dataTransfer.effectAllowed = 'copyMove';
+      }
+      const card = document.getElementById('feast-dish-card-' + dishId);
+      if (card) card.classList.add('is-dragging');
+      
+      const hint = document.getElementById('feast-drag-hint');
+      if (hint) hint.innerText = '👆 放手投餵給上方角色！';
+    }
+
+    // 拖曳結束
+    function handleFeastDragEnd(event) {
+      draggedFeastDishId = null;
+      document.querySelectorAll('.feast-dish-card').forEach(c => c.classList.remove('is-dragging'));
+      document.querySelectorAll('.char-drop-target').forEach(t => t.classList.remove('drag-hover'));
+      const hint = document.getElementById('feast-drag-hint');
+      if (hint) hint.innerText = '👆 抓住美食往上拖，或點擊投餵！';
+    }
+
+    // 拖曳滑過目標角色
+    function handleFeastDragOver(event) {
+      event.preventDefault();
+      if (event.dataTransfer) {
+        event.dataTransfer.dropEffect = 'copy';
+      }
+    }
+
+    function handleFeastDragEnter(event, charKey) {
+      event.preventDefault();
+      const target = document.getElementById('char-target-' + charKey);
+      if (target) target.classList.add('drag-hover');
+    }
+
+    function handleFeastDragLeave(event, charKey) {
+      const target = document.getElementById('char-target-' + charKey);
+      if (target) target.classList.remove('drag-hover');
+    }
+
+    // 放下美食到角色身上
+    function handleFeastDrop(event, charKey) {
+      event.preventDefault();
+      const target = document.getElementById('char-target-' + charKey);
+      if (target) target.classList.remove('drag-hover');
+
+      let dishId = null;
+      if (event.dataTransfer) {
+        dishId = event.dataTransfer.getData('text/plain');
+      }
+      if (!dishId) dishId = draggedFeastDishId || selectedFeastDishId;
+      if (!dishId) dishId = FeastDishes[0].id;
+
+      feedCharacter(charKey, dishId);
+    }
+
+    // 點擊美食卡片（支援手機觸控或點擊投餵）
+    function handleFeastDishClick(dishId) {
+      selectedFeastDishId = dishId;
+      const dishData = FeastDishes.find(d => d.id === dishId);
+      const hint = document.getElementById('feast-drag-hint');
+      if (hint && dishData) {
+        hint.innerText = `🍴 已選【${dishData.name}】點上方角色投餵！`;
+      }
+      renderFeastDishesRow();
+    }
+
+    // 點擊角色卡片（若已選取料理則直接餵給該角色；若未選取則餵第一道或輪流餵）
+    function handleFeastCharClick(charKey) {
+      let dishId = selectedFeastDishId;
+      if (!dishId) {
+        const untasted = FeastDishes.find(d => !feastDishesFed.has(d.id));
+        dishId = untasted ? untasted.id : FeastDishes[0].id;
+        selectedFeastDishId = dishId;
+      }
+      feedCharacter(charKey, dishId);
+    }
+
+    // 執行投餵互動
+    function feedCharacter(charKey, dishId) {
+      const dishData = FeastDishes.find(d => d.id === dishId) || FeastDishes[0];
+      feastDishesFed.add(dishData.id);
+      feastFedCounts[charKey] = (feastFedCounts[charKey] || 0) + 1;
+
+      try { sounds.playChomp(); } catch(e){}
+
+      // 1. 角色吃東西咀嚼動態
+      const charBox = document.getElementById('feast-char-' + charKey);
+      const charTarget = document.getElementById('char-target-' + charKey);
+      if (charBox) {
+        charBox.classList.add('animate-chew');
+        setTimeout(() => charBox.classList.remove('animate-chew'), 650);
+      }
+      if (charTarget) {
+        charTarget.classList.add('ring-4', 'ring-orange-300');
+        setTimeout(() => charTarget.classList.remove('ring-4', 'ring-orange-300'), 500);
+      }
+
+      // 2. 更新該角色的已品嚐次數
+      const countBadge = document.getElementById('feast-count-' + charKey);
+      if (countBadge) {
+        countBadge.innerText = `已品嚐 ${feastFedCounts[charKey]} 次`;
+      }
+
+      // 3. 觸發右上角讚美氣泡 (pointer-events-none，絕不阻擋後續拖移)
+      const praise = getCharacterPraise(charKey);
+      const praiseBubble = document.getElementById('feast-praise-' + charKey);
+      const praiseText = document.getElementById('feast-praise-text-' + charKey);
+
+      if (praiseBubble && praiseText) {
+        praiseText.innerText = praise;
+        praiseBubble.classList.remove('hidden');
+        praiseBubble.classList.remove('animate-praise-pop');
+        void praiseBubble.offsetWidth;
+        praiseBubble.classList.add('animate-praise-pop');
+
+        if (praiseTimeouts[charKey]) clearTimeout(praiseTimeouts[charKey]);
+        praiseTimeouts[charKey] = setTimeout(() => {
+          praiseBubble.classList.add('hidden');
+        }, 4500);
+      }
+
+      // 4. 飄出美味心心或表情粒子
+      spawnFeastFloatingReaction(charKey, dishData);
+
+      // 5. 更新美食橫列狀態與總進度
+      renderFeastDishesRow();
+      updateFeastSatisfaction();
+
+      // 6. 全部 5 道料理都品嚐過時，全場放煙火慶祝音效
+      if (feastDishesFed.size === FeastDishes.length) {
+        const hint = document.getElementById('feast-drag-hint');
+        if (hint) {
+          hint.className = 'text-xs sm:text-sm text-emerald-800 font-black bg-emerald-100 px-3 py-1 rounded-full animate-bounce shadow-xs';
+          hint.innerText = '🎉 5道特級料理大圓滿！人人健康又活力！';
+        }
+      }
+    }
+
+    // 飄出美味符號粒子
+    function spawnFeastFloatingReaction(charKey, dishData) {
+      const container = document.getElementById('feast-floating-particles');
+      if (!container) return;
+      const particle = document.createElement('div');
+      particle.className = 'absolute font-black text-xs sm:text-sm text-amber-800 bg-white/95 border-2 border-amber-300 rounded-full px-2.5 py-0.5 shadow-md animate-float-up pointer-events-none whitespace-nowrap z-30';
+      
+      const charTarget = document.getElementById('char-target-' + charKey);
+      if (charTarget && container) {
+        const rect = charTarget.getBoundingClientRect();
+        const cRect = container.getBoundingClientRect();
+        particle.style.left = `${Math.max(10, rect.left - cRect.left + 20 + (Math.random() * 40 - 20))}px`;
+        particle.style.top = `${Math.max(10, rect.top - cRect.top + 30)}px`;
+      } else {
+        particle.style.left = `${30 + Math.random() * 40}%`;
+        particle.style.top = `${40 + Math.random() * 20}%`;
+      }
+      
+      particle.innerText = `😋 ${dishData.icon} 好吃！`;
+      container.appendChild(particle);
+      setTimeout(() => particle.remove(), 1200);
+    }
+
+    // 更新總品嚐度進度條
+    function updateFeastSatisfaction() {
+      const count = feastDishesFed.size;
+      const total = FeastDishes.length;
+      const countEl = document.getElementById('feast-satisfaction-count');
+      const barEl = document.getElementById('feast-satisfaction-bar');
+      if (countEl) {
+        countEl.innerText = `${count} / ${total} 道料理已品嚐 (滿足度 ${Math.round(count / total * 100)}%)`;
+      }
+      if (barEl) {
+        barEl.style.width = `${(count / total) * 100}%`;
+        if (count === total) {
+          barEl.className = 'bg-gradient-to-r from-emerald-400 to-teal-500 h-full rounded-full transition-all duration-500 shadow-sm';
+        }
+      }
+    }
+
+    // 渲染橫向排列的 6 道美食卡片
+    function renderFeastDishesRow() {
+      const row = document.getElementById('feast-dishes-row');
+      if (!row) return;
+
+      row.innerHTML = FeastDishes.map(item => {
+        const dish = DishAssets[item.id] || DishAssets.omurice;
+        const isFed = feastDishesFed.has(item.id);
+        const isSelected = (selectedFeastDishId === item.id);
+
+        return `
+          <div draggable="true"
+               id="feast-dish-card-${item.id}"
+               ondragstart="handleFeastDragStart(event, '${item.id}')"
+               ondragend="handleFeastDragEnd(event)"
+               onclick="handleFeastDishClick('${item.id}')"
+               class="feast-dish-card cursor-grab active:cursor-grabbing border-2 ${isSelected ? 'border-orange-500 bg-orange-50 ring-2 ring-orange-400 shadow-md' : (isFed ? 'border-emerald-400 bg-emerald-50/90 shadow-xs' : 'border-amber-300 bg-white hover:bg-amber-50 shadow-sm')} rounded-2xl p-2 sm:p-3 flex flex-col items-center justify-between text-center transition group relative select-none">
+            
+            ${isFed ? '<span class="absolute -top-1 -right-1 bg-emerald-500 text-white rounded-full text-xs px-2 py-0.5 font-black shadow-xs pointer-events-none">✓ 已品嚐</span>' : ''}
+            
+            <div class="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 flex-shrink-0 group-hover:scale-110 transition-transform pointer-events-none">
+              ${dish.svg}
+            </div>
+
+            <div class="mt-1.5 w-full pointer-events-none">
+              <div class="text-xs sm:text-sm md:text-base font-black text-amber-950 truncate">${dish.name}</div>
+              <div class="text-xs sm:text-sm text-amber-800 font-bold bg-amber-100/90 px-1.5 py-0.5 rounded mt-0.5 truncate">${item.tag}</div>
+            </div>
+
+            <button type="button" class="mt-1.5 w-full text-xs sm:text-sm md:text-base font-black py-1 sm:py-1.5 px-1.5 rounded-xl transition pointer-events-none ${isSelected ? 'bg-orange-500 text-white' : (isFed ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' : 'bg-orange-500 text-white hover:bg-orange-600')}">
+              ${isSelected ? '🍴 已選取' : (isFed ? '😋 拖曳投餵' : '🍴 拖曳投餵')}
+            </button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ================= 中華小廚神故事對話系統 (多頁劇情控制) =================
+    function openStoryDialogue(dialogueKey) {
+      currentStoryKey = dialogueKey;
+      currentStoryIndex = 0;
+      renderStoryPage();
+      document.getElementById('modal-story').classList.remove('hidden');
+    }
+
+    function openCurrentStoryModal() {
+      try { sounds.playClick(); } catch(e){}
+      const curRound = gameState.state.currentRound;
+      const rConfig = RoundConfigs[curRound];
+      openStoryDialogue(rConfig.storyKey);
+    }
+
+    function renderStoryPage() {
+      const pages = StoryDialogues[currentStoryKey] || StoryDialogues.intro;
+      const page = pages[currentStoryIndex];
+
+      document.getElementById('story-title').innerText = page.title;
+      document.getElementById('story-speaker').innerText = page.speaker;
+      document.getElementById('story-text').innerText = page.text;
+      document.getElementById('story-page-indicator').innerText = `第 ${currentStoryIndex + 1} / ${pages.length} 頁`;
+
+      // 渲染角色頭像
+      const avatarBox = document.getElementById('story-avatar');
+      if (window.StoryCharacters && window.StoryCharacters[page.avatar]) {
+        avatarBox.innerHTML = window.StoryCharacters[page.avatar];
+      } else if (window.CharacterAssets) {
+        avatarBox.innerHTML = window.CharacterAssets.chefBobo;
+      }
+
+      // 控制翻頁按鈕
+      const prevBtn = document.getElementById('story-prev-btn');
+      const nextBtn = document.getElementById('story-next-btn');
+
+      prevBtn.disabled = (currentStoryIndex === 0);
+      if (currentStoryIndex === pages.length - 1) {
+        nextBtn.innerText = '出發開始試煉！🎲';
+      } else {
+        nextBtn.innerText = '下一頁 ➔';
+      }
+    }
+
+    function nextStoryPage() {
+      try { sounds.playCardFlip(); } catch(e){}
+      const pages = StoryDialogues[currentStoryKey] || StoryDialogues.intro;
+      if (currentStoryIndex < pages.length - 1) {
+        currentStoryIndex++;
+        renderStoryPage();
+      } else {
+        closeStoryModal();
+      }
+    }
+
+    function prevStoryPage() {
+      try { sounds.playClick(); } catch(e){}
+      if (currentStoryIndex > 0) {
+        currentStoryIndex--;
+        renderStoryPage();
+      }
+    }
+
+    function closeStoryModal() {
+      if (currentStoryKey) {
+        gameState.state[`hasSeen_${currentStoryKey}`] = true;
+        gameState.save();
+      }
+      document.getElementById('modal-story').classList.add('hidden');
+    }
+
+    // ================= 答對題目複習筆記 (點擊星星打開) =================
+    function openAnsweredReviewModal() {
+      try { sounds.playClick(); } catch(e){}
+      const list = gameState.getAnsweredQuestionsList();
+      const countEl = document.getElementById('review-stars-count');
+      const listBox = document.getElementById('review-questions-list');
+
+      if (countEl) countEl.innerText = list.length;
+
+      if (!list || list.length === 0) {
+        listBox.innerHTML = `
+          <div class="flex flex-col items-center justify-center py-12 text-center text-slate-500 space-y-3 bg-amber-50/60 rounded-2xl border-2 border-dashed border-amber-200 p-6">
+            <span class="text-5xl animate-bounce">📖</span>
+            <div class="font-black text-base text-amber-950">目前還沒有答對的題目筆記喔！</div>
+            <p class="text-xs text-slate-600 max-w-sm font-bold leading-relaxed">
+              快去擲骰子踩中綠色的「答題試煉格」，回答六大類飲食營養題目！只要答對，題目、正解與詳細營養解析都會收錄在這裡，隨時點擊星星 ⭐ 即可複習！
+            </p>
+          </div>
+        `;
+      } else {
+        listBox.innerHTML = list.map(q => {
+          const food = FoodAssets[q.foodId] || { name: '健康食材', svg: '🥗' };
+          const correctOpt = q.options.find(o => o.key === q.ans) || { text: q.ans };
+
+          return `
+            <div class="bg-gradient-to-r from-amber-50/90 to-emerald-50/90 border-2 border-amber-200 hover:border-emerald-400 rounded-2xl p-4 sm:p-5 shadow-sm transition space-y-2.5">
+              <div class="flex items-center justify-between gap-2.5 flex-wrap">
+                <div class="flex items-center gap-2">
+                  <span class="text-sm bg-amber-200 text-amber-950 px-3 py-1 rounded-full font-black">
+                    第 ${q.id} 題・${q.stageName}
+                  </span>
+                  <span class="text-sm bg-emerald-100 text-emerald-900 border border-emerald-300 px-3 py-1 rounded-full font-bold">
+                    🎯 ${q.categoryTag}
+                  </span>
+                </div>
+                <div class="flex items-center gap-2 text-sm font-black text-emerald-800 bg-white px-3 py-1 rounded-xl border border-emerald-300 shadow-xs">
+                  <div class="w-6 h-6 flex-shrink-0">${food.svg}</div>
+                  <span>解鎖：${food.name}</span>
+                </div>
+              </div>
+
+              <div class="text-base sm:text-lg md:text-xl font-black text-slate-900 text-left leading-relaxed">
+                ${q.q}
+              </div>
+
+              <div class="bg-white/95 p-3.5 rounded-xl border border-emerald-300 text-sm sm:text-base text-left space-y-1.5">
+                <div class="text-emerald-800 font-black flex items-center gap-1.5">
+                  <span>✅ 正確解答：</span>
+                  <span class="bg-emerald-100 px-2 py-0.5 rounded-lg text-emerald-900 font-black">${correctOpt.text}</span>
+                </div>
+                <div class="text-slate-800 font-bold leading-relaxed">
+                  ${q.shortExplanation}
+                </div>
+              </div>
+
+              <div class="bg-amber-100/80 p-3.5 rounded-xl border border-amber-300 text-sm sm:text-base text-left font-bold text-amber-950 leading-relaxed">
+                💡 <strong>營養小秘訣：</strong>${q.detailedReason}
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      document.getElementById('modal-stars-review').classList.remove('hidden');
+    }
+
+    function closeAnsweredReviewModal() {
+      document.getElementById('modal-stars-review').classList.add('hidden');
+      if (isInEndingFeast) {
+        document.getElementById('modal-ending-feast').classList.remove('hidden');
+      }
+    }
+
+    // ================= 簡易玩法指南彈窗 =================
+    function openGuideModal() {
+      try { sounds.playClick(); } catch(e){}
+      document.getElementById('modal-guide').classList.remove('hidden');
+    }
+
+    function closeGuideModal() {
+      document.getElementById('modal-guide').classList.add('hidden');
+    }
+
+    // ================= 食材庫存與食譜圖鑑 =================
+    function openInventoryModal() {
+      try { sounds.playClick(); } catch(e){}
+      const grid = document.getElementById('inventory-grid');
+      const items = Object.values(FoodAssets).filter(f => !f.isJunk);
+
+      grid.innerHTML = items.map(food => {
+        const count = gameState.state.inventory[food.id] || 0;
+        return `
+          <div class="bg-amber-50 border-2 border-amber-200 rounded-2xl p-2.5 sm:p-3 flex flex-col items-center text-center shadow-xs">
+            <div class="w-14 h-14 sm:w-16 sm:h-16 relative flex items-center justify-center">
+              ${food.svg}
+              <span class="absolute -top-1.5 -right-1.5 bg-amber-600 text-white text-xs sm:text-sm font-black px-2 py-0.5 rounded-full shadow-xs border border-white">${count}</span>
+            </div>
+            <span class="text-xs sm:text-sm md:text-base font-black text-slate-800 mt-2">${food.name}</span>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('modal-inventory').classList.remove('hidden');
+    }
+
+    function closeInventoryModal() {
+      document.getElementById('modal-inventory').classList.add('hidden');
+    }
+
+    function openRecipeBookModal() {
+      try { sounds.playClick(); } catch(e){}
+      const list = document.getElementById('recipes-list');
+      
+      const allStageRecipes = [];
+      [1, 2, 3, 4, 5].forEach(roundNum => {
+        const rConfig = RoundConfigs[roundNum];
+        rConfig.recipes.forEach((recipe, rIdx) => {
+          allStageRecipes.push({
+            stageNum: roundNum,
+            stageName: rConfig.name,
+            recipeIndex: rIdx + 1,
+            totalInStage: rConfig.recipes.length,
+            recipe: recipe,
+            dish: DishAssets[recipe.id],
+            isUnlocked: gameState.state.unlockedRecipes.includes(recipe.id)
+          });
+        });
+      });
+
+      list.innerHTML = allStageRecipes.map(item => {
+        const stageLabel = item.totalInStage > 1 
+          ? `第 ${item.stageNum} 關（食譜 ${item.recipeIndex}/${item.totalInStage}）` 
+          : `第 ${item.stageNum} 關`;
+
+        const isRevealed = gameState.isRecipeRevealed(item.recipe.id);
+        if (item.isUnlocked && item.dish) {
+          return `
+            <div class="border-2 border-emerald-400 bg-emerald-50/95 rounded-2xl p-3.5 sm:p-4 flex items-center justify-between shadow-xs">
+              <div class="flex items-center gap-3 sm:gap-4">
+                <div class="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0">${item.dish.svg}</div>
+                <div class="text-left">
+                  <div class="text-xs sm:text-sm text-emerald-800 font-bold">${stageLabel}・${item.stageName}</div>
+                  <div class="text-base sm:text-lg md:text-xl font-black text-emerald-950">${item.dish.name}</div>
+                  <div class="text-xs sm:text-sm text-slate-600 font-medium mt-0.5">${item.recipe.desc}</div>
+                </div>
+              </div>
+              <span class="text-xs sm:text-sm md:text-base font-black text-emerald-700 bg-emerald-100 border border-emerald-300 px-3.5 py-1.5 rounded-full shadow-xs flex-shrink-0">✨已解鎖</span>
+            </div>
+          `;
+        } else if (isRevealed && item.dish) {
+          return `
+            <div class="border-2 border-purple-400 bg-purple-50/95 rounded-2xl p-3.5 sm:p-4 flex items-center justify-between shadow-xs">
+              <div class="flex items-center gap-3 sm:gap-4">
+                <div class="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 bg-white rounded-2xl p-1.5 border border-purple-300 shadow-xs">${item.dish.svg}</div>
+                <div class="text-left">
+                  <div class="text-xs sm:text-sm text-purple-800 font-bold">${stageLabel}・${item.stageName}</div>
+                  <div class="text-base sm:text-lg md:text-xl font-black text-purple-950">🔮 ${item.dish.name}</div>
+                  <div class="text-xs sm:text-sm text-purple-700 font-medium mt-0.5">${item.recipe.desc}</div>
+                  <div class="text-xs sm:text-sm text-emerald-800 font-bold bg-emerald-100/90 px-2 py-0.5 rounded-md mt-1 inline-block">
+                    所需食材：${item.recipe.requiredFoods.map(f => (FoodAssets[f] ? FoodAssets[f].name : f)).join('、')}
+                  </div>
+                </div>
+              </div>
+              <span class="text-xs sm:text-sm md:text-base font-black text-purple-700 bg-purple-100 border border-purple-300 px-3.5 py-1.5 rounded-full shadow-xs flex-shrink-0">🔮天機已揭</span>
+            </div>
+          `;
+        } else {
+          return `
+            <div class="border-2 border-dashed border-amber-300 bg-amber-50/70 rounded-2xl p-3.5 sm:p-4 flex items-center justify-between shadow-xs">
+              <div class="flex items-center gap-3 sm:gap-4">
+                <div class="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 rounded-2xl bg-amber-100 border border-amber-300 flex items-center justify-center text-3xl sm:text-4xl font-black text-amber-700 animate-pulse">
+                  ❓
+                </div>
+                <div class="text-left">
+                  <div class="text-xs sm:text-sm text-amber-800 font-bold">${stageLabel}・${item.stageName}</div>
+                  <div class="text-base sm:text-lg md:text-xl font-black text-amber-950">？？？ 神秘特級食譜</div>
+                  <div class="text-xs sm:text-sm text-amber-700 font-medium mt-0.5">💡 解鎖提示：${item.recipe.slogan}</div>
+                </div>
+              </div>
+              <span class="text-xs sm:text-sm md:text-base font-black text-amber-800 bg-amber-200/80 px-3.5 py-1.5 rounded-full shadow-xs flex-shrink-0">🔒待探索</span>
+            </div>
+          `;
+        }
+      }).join('');
+
+      document.getElementById('modal-recipes').classList.remove('hidden');
+    }
+
+    function closeRecipeBookModal() {
+      document.getElementById('modal-recipes').classList.add('hidden');
+      if (isInEndingFeast) {
+        document.getElementById('modal-ending-feast').classList.remove('hidden');
+      }
+    }
+
+    // ================= 五大修煉關卡地圖彈窗 =================
+    function openStagesModal() {
+      try { sounds.playClick(); } catch(e){}
+      renderStagesMap();
+      document.getElementById('modal-stages').classList.remove('hidden');
+    }
+
+    function closeStagesModal() {
+      document.getElementById('modal-stages').classList.add('hidden');
+      if (isInEndingFeast) {
+        document.getElementById('modal-ending-feast').classList.remove('hidden');
+      }
+    }
+
+    function renderStagesMap() {
+      const container = document.getElementById('stages-list');
+      if (!container) return;
+
+      const curRound = gameState.state.currentRound || 1;
+      const isAllFinished = (typeof gameState.isGameFinished === 'function') 
+        ? gameState.isGameFinished() 
+        : [1, 2, 3, 4, 5].every(r => gameState.isStageCompleted(r));
+
+      const html = [1, 2, 3, 4, 5].map(r => {
+        const rConfig = RoundConfigs[r];
+        if (!rConfig) return '';
+        const recipe = rConfig.recipes[0];
+        const dish = DishAssets[recipe.id] || DishAssets.omurice;
+        
+        // 判定狀態：已通關 (正常亮色)、進行中 (琥珀金高亮標示)、尚未解鎖 (灰色)
+        const isCompleted = isAllFinished || gameState.state.unlockedRecipes.includes(recipe.id) || r < curRound;
+        const isCurrent = !isAllFinished && (r === curRound) && !isCompleted;
+        const isLocked = !isCompleted && !isCurrent;
+
+        if (isCompleted) {
+          return `
+            <div class="border-2 border-emerald-400 bg-emerald-50/95 rounded-2xl p-3.5 sm:p-4.5 flex items-center justify-between shadow-xs transition hover:shadow-sm">
+              <div class="flex items-center gap-3 sm:gap-4">
+                <div class="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 flex-shrink-0 bg-white rounded-2xl p-1 border-2 border-emerald-300 shadow-xs">
+                  ${dish.svg}
+                </div>
+                <div class="text-left">
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs sm:text-sm font-black text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-200">第 ${r} 關</span>
+                    <span class="text-sm sm:text-base md:text-lg font-black text-emerald-950">${rConfig.name}</span>
+                  </div>
+                  <div class="text-xs sm:text-sm md:text-base font-black text-emerald-800 mt-1 flex items-center gap-1">
+                    <span>🍳 料理：</span>
+                    <span>【${recipe.name}】</span>
+                  </div>
+                  <div class="text-xs sm:text-sm text-emerald-700 font-bold mt-0.5">
+                    💡 口訣：${rConfig.slogan}
+                  </div>
+                </div>
+              </div>
+              <div class="flex-shrink-0 flex flex-col items-end gap-1.5 ml-2">
+                <span class="px-3 sm:px-4 py-1.5 sm:py-2 rounded-2xl text-xs sm:text-sm md:text-base font-black bg-emerald-100 text-emerald-800 border-2 border-emerald-300 shadow-xs flex items-center gap-1">
+                  <span>✨</span>
+                  <span>已通關</span>
+                </span>
+              </div>
+            </div>
+          `;
+        } else if (isCurrent) {
+          // 計算當前關卡食材收集進度
+          const reqFoods = recipe.requiredFoods;
+          const collectedCount = reqFoods.filter(fId => (gameState.state.inventory[fId] || 0) > 0).length;
+          const isReadyToCook = (collectedCount === reqFoods.length);
+
+          return `
+            <div class="border-4 border-amber-500 bg-amber-50 rounded-2xl p-3.5 sm:p-4.5 flex items-center justify-between shadow-md ring-4 ring-amber-300/60 transition relative">
+              <div class="flex items-center gap-3 sm:gap-4">
+                <div class="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 flex-shrink-0 bg-white rounded-2xl p-1 border-2 border-amber-400 shadow-xs animate-bounce">
+                  ${dish.svg}
+                </div>
+                <div class="text-left">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="text-xs sm:text-sm font-black text-amber-950 bg-amber-200 px-2.5 py-0.5 rounded-full border border-amber-300">第 ${r} 關</span>
+                    <span class="text-sm sm:text-base md:text-lg font-black text-amber-950">${rConfig.name}</span>
+                    <span class="text-[10px] sm:text-xs font-black text-white bg-amber-500 px-2 py-0.5 rounded-full animate-pulse">修煉進行中</span>
+                  </div>
+                  <div class="text-xs sm:text-sm md:text-base font-black text-amber-950 mt-1 flex items-center gap-1.5">
+                    <span>🍳 目標：翻炒【${recipe.name}】</span>
+                  </div>
+                  <div class="text-xs sm:text-sm text-amber-800 font-bold mt-0.5">
+                    💡 口訣：${rConfig.slogan}
+                  </div>
+                  <div class="mt-1.5 flex items-center gap-2 flex-wrap">
+                    <span class="text-xs sm:text-sm font-black text-amber-950">食材收集：</span>
+                    <span class="text-xs sm:text-sm font-black px-2.5 py-0.5 rounded-full ${isReadyToCook ? 'bg-emerald-200 text-emerald-950 border border-emerald-400' : 'bg-amber-200 text-amber-950 border border-amber-300'}">
+                      ${collectedCount} / ${reqFoods.length} 種齊全 ${isReadyToCook ? '🎉 可回起點翻炒！' : '（擲骰答題收集）'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div class="flex-shrink-0 flex flex-col items-end gap-1.5 ml-2">
+                <span class="px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-2xl text-xs sm:text-sm md:text-base font-black bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-pop flex items-center gap-1.5 animate-pulse">
+                  <span>🎯</span>
+                  <span>進行中</span>
+                </span>
+                <button onclick="closeStagesModal();" class="text-xs sm:text-sm font-black text-amber-900 bg-white hover:bg-amber-100 border border-amber-300 px-3 py-1 rounded-xl transition cursor-pointer shadow-xs">
+                  立即挑戰 🎲
+                </button>
+              </div>
+            </div>
+          `;
+        } else {
+          // 尚未解鎖 (灰色淡化)
+          return `
+            <div class="border-2 border-dashed border-slate-300 bg-slate-100/90 rounded-2xl p-3.5 sm:p-4.5 flex items-center justify-between opacity-60 grayscale transition">
+              <div class="flex items-center gap-3 sm:gap-4">
+                <div class="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 flex-shrink-0 rounded-2xl bg-slate-200 border-2 border-slate-300 flex items-center justify-center text-2xl sm:text-3xl font-black text-slate-500">
+                  🔒
+                </div>
+                <div class="text-left">
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs sm:text-sm font-bold text-slate-600 bg-slate-200 px-2 py-0.5 rounded-full">第 ${r} 關</span>
+                    <span class="text-sm sm:text-base md:text-lg font-black text-slate-700">${rConfig.name}</span>
+                  </div>
+                  <div class="text-xs sm:text-sm md:text-base font-bold text-slate-600 mt-1">
+                    🍳 神秘特級食譜（通關第 ${r - 1} 關解鎖）
+                  </div>
+                  <div class="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">
+                    💡 口訣提示：${rConfig.slogan}
+                  </div>
+                </div>
+              </div>
+              <div class="flex-shrink-0 ml-2">
+                <span class="px-3 sm:px-4 py-1.5 sm:py-2 rounded-2xl text-xs sm:text-sm font-black bg-slate-200 text-slate-500 border border-slate-300 flex items-center gap-1">
+                  <span>🔒</span>
+                  <span>尚未解鎖</span>
+                </span>
+              </div>
+            </div>
+          `;
+        }
+      }).join('');
+
+      container.innerHTML = html;
+    }
+
+    // ================= 食材集齊開火小提醒 =================
+    function checkAndTriggerCookReminder() {
+      const curRound = gameState.state.currentRound || 1;
+      const activeRecipe = gameState.getActiveRecipe(curRound);
+      if (!activeRecipe) return;
+
+      // 若該食譜已製作解鎖，無需提醒
+      if (gameState.state.unlockedRecipes.includes(activeRecipe.id)) return;
+
+      // 檢查所需食材是否齊全
+      const allReady = activeRecipe.requiredFoods.every(fId => (gameState.state.inventory[fId] || 0) > 0);
+      if (!allReady) return;
+
+      // 避免同關卡食譜重複跳出打擾
+      const reminderKey = `${curRound}_${activeRecipe.id}`;
+      if (gameState.state.lastCookReminder === reminderKey) return;
+
+      gameState.state.lastCookReminder = reminderKey;
+      gameState.save();
+
+      setTimeout(() => {
+        openCookReminderModal(activeRecipe);
+      }, 350);
+    }
+
+    function openCookReminderModal(recipe) {
+      const curRound = gameState.state.currentRound || 1;
+      const targetRecipe = recipe || gameState.getActiveRecipe(curRound);
+      if (!targetRecipe) return;
+
+      try { sounds.playFanfare(); } catch(e){}
+
+      const nameEl = document.getElementById('cook-reminder-dish-name');
+      if (nameEl) nameEl.innerText = targetRecipe.name;
+
+      const foodsListEl = document.getElementById('cook-reminder-foods-list');
+      if (foodsListEl) {
+        foodsListEl.innerHTML = targetRecipe.requiredFoods.map(fId => {
+          const food = FoodAssets[fId] || { name: fId, svg: '🥗' };
+          return `
+            <div class="flex items-center gap-1.5 bg-emerald-100/90 border border-emerald-300 text-emerald-950 font-black px-2.5 py-1 rounded-xl text-xs sm:text-sm shadow-2xs">
+              <span class="w-5 h-5 flex-shrink-0">${food.svg}</span>
+              <span>${food.name}</span>
+              <span class="text-emerald-700 font-black">✓</span>
+            </div>
+          `;
+        }).join('');
+      }
+
+      document.getElementById('modal-cook-reminder').classList.remove('hidden');
+    }
+
+    function closeCookReminderModal() {
+      const modal = document.getElementById('modal-cook-reminder');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    // ================= 榮譽頒獎典禮（獎狀＆特級廚師證） =================
+    function openCertificateModal() {
+      try { sounds.playFanfare(); } catch(e){}
+      renderCertificateContent();
+      document.getElementById('modal-certificate').classList.remove('hidden');
+    }
+
+    function closeCertificateModal() {
+      const modal = document.getElementById('modal-certificate');
+      if (modal) modal.classList.add('hidden');
+      if (isInEndingFeast) {
+        document.getElementById('modal-ending-feast').classList.remove('hidden');
+      }
+    }
+
+    function renderCertificateContent() {
+      // 載入小杰頭像至特級廚師證照
+      const avatarBox = document.getElementById('cert-char-avatar');
+      if (avatarBox && window.StoryCharacters && window.StoryCharacters.xiaojie) {
+        avatarBox.innerHTML = StoryCharacters.xiaojie;
+      }
+
+      // 闖關時間與評語判定 (20 分鐘 = 1200 秒)
+      const totalSec = (gameState && gameState.state && gameState.state.elapsedSeconds) || 0;
+      const m = Math.floor(totalSec / 60);
+      const s = totalSec % 60;
+      const timeStr = `${m > 0 ? `${m}分` : ''}${s}秒`;
+
+      const timeBadgeEl = document.getElementById('cert-time-badge');
+      const timeTextEl = document.getElementById('cert-time-text');
+      if (timeTextEl && timeBadgeEl) {
+        if (totalSec <= 1200) {
+          // 20 分鐘內神速達標
+          timeBadgeEl.className = 'bg-emerald-100 text-emerald-950 border border-emerald-300 px-3.5 py-1.5 rounded-2xl text-xs sm:text-sm font-black shadow-2xs inline-flex items-center gap-1.5 flex-wrap justify-center';
+          timeTextEl.innerHTML = `只花了 <strong>${timeStr}</strong>（20分鐘內神速達標！🎉）`;
+        } else {
+          // 超過 20 分鐘：學生依然通關，評語依需求加上「還可以再快一點」
+          timeBadgeEl.className = 'bg-amber-100 text-amber-950 border border-amber-400 px-3.5 py-1.5 rounded-2xl text-xs sm:text-sm font-black shadow-2xs inline-flex items-center gap-1.5 flex-wrap justify-center';
+          timeTextEl.innerHTML = `耗時 <strong>${timeStr}</strong>（持之以恆通關！下次還可以再快一點喔 💪）`;
+        }
+      }
+
+      // 更新星星題庫數
+      const starCount = (gameState && gameState.state && gameState.state.answeredQuestions && gameState.state.answeredQuestions.length) || 0;
+      const starsBadge = document.getElementById('cert-stars-badge');
+      if (starsBadge) {
+        starsBadge.innerText = `⭐ 累積答對 ${starCount} 題營養試煉`;
+      }
+    }
+
+    // ================= 學習活動 20 分鐘計時系統 =================
+    function formatTimerString(totalSec) {
+      const m = Math.floor(totalSec / 60);
+      const s = totalSec % 60;
+      return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+
+    function updateTimerDisplay() {
+      const totalSec = (gameState && gameState.state && gameState.state.elapsedSeconds) || 0;
+      const timeTextEl = document.getElementById('game-timer-text');
+      const timerContainer = document.getElementById('game-timer-container');
+      if (timeTextEl) {
+        timeTextEl.innerText = formatTimerString(totalSec);
+      }
+      if (timerContainer) {
+        if (totalSec > 1200) {
+          timerContainer.className = 'flex items-center gap-1 bg-amber-50 border-2 border-amber-500 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-black text-amber-950 shadow-2xs transition';
+          timerContainer.title = '闖關計時（已超過 20 分鐘目標，仍可繼續遊玩！）';
+        } else {
+          timerContainer.className = 'flex items-center gap-1 bg-white border-2 border-emerald-400 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-black text-emerald-950 shadow-2xs transition';
+          timerContainer.title = '闖關計時（目標 20 分鐘內完成，超時仍可繼續遊玩）';
+        }
+      }
+    }
+
+    function startGameTimer() {
+      if (gameTimerInterval) {
+        clearInterval(gameTimerInterval);
+        gameTimerInterval = null;
+      }
+      updateTimerDisplay();
+
+      // 若遊戲已通關第 5 關全滿貫或處於特級盛宴，不繼續累加時間
+      if (isInEndingFeast || (gameState && gameState.isStageCompleted && gameState.isStageCompleted(5))) {
+        return;
+      }
+
+      let tickCount = 0;
+      gameTimerInterval = setInterval(() => {
+        if (isInEndingFeast || (gameState && gameState.isStageCompleted && gameState.isStageCompleted(5))) {
+          clearInterval(gameTimerInterval);
+          gameTimerInterval = null;
+          return;
+        }
+        gameState.state.elapsedSeconds = (gameState.state.elapsedSeconds || 0) + 1;
+        tickCount++;
+        if (tickCount % 5 === 0) {
+          gameState.save();
+        }
+        updateTimerDisplay();
+      }, 1000);
+    }
+
+    function stopGameTimer() {
+      if (gameTimerInterval) {
+        clearInterval(gameTimerInterval);
+        gameTimerInterval = null;
+      }
+      if (gameState && typeof gameState.save === 'function') {
+        gameState.save();
+      }
+      updateTimerDisplay();
+    }
+
+    function handleSoundToggle() {
+      const isMuted = sounds.toggleMute();
+      const icon = isMuted ? '🔇' : '🔊';
+      const b1 = document.getElementById('sound-btn');
+      const b2 = document.getElementById('sound-btn-mobile');
+      if (b1) b1.innerText = icon;
+      if (b2) b2.innerText = icon;
+    }
+
+    function handleResetGame() {
+      if (confirm('確定重置進度？（換下一位同學遊玩）')) {
+        isInEndingFeast = false;
+        document.getElementById('modal-ending-feast').classList.add('hidden');
+        const certModal = document.getElementById('modal-certificate');
+        if (certModal) certModal.classList.add('hidden');
+        const cookRem = document.getElementById('modal-cook-reminder');
+        if (cookRem) cookRem.classList.add('hidden');
+
+        feastDishesFed.clear();
+        feastFedCounts = { dudu: 0, xiaojie: 0, masterJidi: 0 };
+        selectedFeastDishId = null;
+        ['dudu', 'xiaojie', 'masterJidi'].forEach(k => {
+          const b = document.getElementById('feast-praise-' + k);
+          if (b) b.classList.add('hidden');
+          const c = document.getElementById('feast-count-' + k);
+          if (c) c.innerText = '已品嚐 0 次';
+        });
+        gameState.reset();
+        gameState.state.elapsedSeconds = 0;
+        gameState.save();
+        try { sounds.playClick(); } catch(e){}
+        updateUI();
+        startGameTimer();
+        openStoryDialogue('intro');
+      }
+    }
+  </script>
+</body>
+</html>
